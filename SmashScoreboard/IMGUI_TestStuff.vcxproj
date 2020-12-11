@@ -24,6 +24,7 @@
     <ProjectGuid>{c8593627-d481-45f2-9057-05b72eb48d16}</ProjectGuid>
     <RootNamespace>IMGUITestStuff</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>SmashScoreboard</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
