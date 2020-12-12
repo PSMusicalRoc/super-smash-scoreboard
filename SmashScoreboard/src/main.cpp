@@ -87,9 +87,14 @@ int main(int argc, char* argv[])
 	ImGui_ImplSDL2_InitForOpenGL(window, context);
 	ImGui_ImplOpenGL3_Init();
 
+	//SETUP WINDOW STYLES
+	ImGui::StyleColorsLight();
+	ImGuiStyle& defaultStyle = ImGui::GetStyle();
+	ImGuiStyle& p1CharStyle = ImGui::GetStyle();
+
 	//GAME LOOP
 
-	SmashScoreboard::PlayerCharacterSelectWindow* pp = new SmashScoreboard::PlayerCharacterSelectWindow();
+	SmashScoreboard::PlayerCharacterSelectWindow* player1CharWindow = new SmashScoreboard::PlayerCharacterSelectWindow();
 
 	while (shouldBeRunning)
 	{
@@ -117,7 +122,7 @@ int main(int argc, char* argv[])
 		//ImGui::ImageButton()
 		ImGui::End();*/
 
-		pp->perframe();
+		player1CharWindow->perframe();
 
 		ImGui::EndFrame();
 

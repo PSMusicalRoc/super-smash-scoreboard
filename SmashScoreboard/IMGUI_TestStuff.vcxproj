@@ -117,7 +117,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\VSProjects\IMGUI_TestStuff\IMGUI_TestStuff\include;C:\cinclude\glad\include;C:\cinclude\imgui-1.79\imgui-1.79;C:\cinclude\SDL2_image\include;C:\cinclude\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\VSProjects\IMGUI_TestStuff\SmashScoreboard\include;C:\cinclude\glad\include;C:\cinclude\imgui-1.79\imgui-1.79;C:\cinclude\SDL2_image\include;C:\cinclude\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -135,7 +135,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\VSProjects\IMGUI_TestStuff\IMGUI_TestStuff\include;C:\cinclude\glad\include;C:\cinclude\imgui-1.79\imgui-1.79;C:\cinclude\SDL2_image\include;C:\cinclude\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\VSProjects\IMGUI_TestStuff\SmashScoreboard\include;C:\cinclude\glad\include;C:\cinclude\imgui-1.79\imgui-1.79;C:\cinclude\SDL2_image\include;C:\cinclude\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
