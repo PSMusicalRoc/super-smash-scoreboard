@@ -1,4 +1,6 @@
 #pragma once
+#include <imgui.h>
+#include <imgui_internal.h>
 #include <imgui_impl_sdl.h>
 #include <vector>
 #include <string>
@@ -26,6 +28,8 @@ namespace SmashScoreboard
 	extern std::vector<CharacterName> characterList;
 
 	//END VARIABLE DEF
+
+	void StyleColorsPlayer1(ImGuiStyle* dst = (ImGuiStyle*) 0);
 
 	void HelpMarker(const char* desc);
 

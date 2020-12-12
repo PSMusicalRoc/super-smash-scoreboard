@@ -113,7 +113,8 @@ int main(int argc, char* argv[])
 		ImGui_ImplSDL2_NewFrame(window);
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui::NewFrame();
-
+		
+		ImGui::StyleColorsLight();
 		ImGui::ShowDemoWindow();
 
 		/*ImGui::Begin("Main Window");
@@ -122,6 +123,7 @@ int main(int argc, char* argv[])
 		//ImGui::ImageButton()
 		ImGui::End();*/
 
+		SmashScoreboard::StyleColorsPlayer1();
 		player1CharWindow->perframe();
 
 		ImGui::EndFrame();
