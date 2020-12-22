@@ -338,3 +338,5 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+/SmashScoreboard/res/ImageCache/Smash Ultimate Full Art
+/SmashScoreboard/Output

@@ -1,18 +1,17 @@
 #include <SmashScoreboardFunctions.h>
+#include <SDL.h>
+#include <SDL_image.h>
 
 std::vector<SmashScoreboard::CharacterName> SmashScoreboard::characterList;
+bool SmashScoreboard::doneWithInit = false;
+bool SmashScoreboard::initSuccessful = false;
 
 SmashScoreboard::CharacterName::CharacterName(std::string str)
 	:text(str) {}
 
 SmashScoreboard::CharacterName::~CharacterName() {}
 
-const char* SmashScoreboard::CharacterName::getText()
-{
-	return text.c_str();
-}
-
-bool SmashScoreboard::init(const char* pathToFile)
+void SmashScoreboard::init(const char* pathToFile)
 {
 	std::fstream characterListFile;
 	characterListFile.open(pathToFile, std::ios::in);
@@ -26,10 +25,29 @@ bool SmashScoreboard::init(const char* pathToFile)
 
 		if (characterList.size() == 0)
 		{
-			return false;
+			initSuccessful = false;
+		}
+		else
+		{
+			/*for (int i = 0; i < characterList.size(); i++)
+			{
+				std::string path("res/");
+				path += characterList[i].
+				path += ".png";
+
+				GLuint loadedImage = LoadAndInitTex(path.c_str());
+				const char* name(Strings[i].getString());
+
+				Textures.emplace(name, loadedImage);
+			}*/
+			initSuccessful = true;
 		}
 	}
-	return true;
+	else
+	{
+		initSuccessful = false;
+	}
+	doneWithInit = true;
 }
 
 void SmashScoreboard::StyleColorsPlayer1(ImGuiStyle* dst)
@@ -149,6 +167,34 @@ bool SmashScoreboard::findLowerSubstring(std::string str1, std::string str2)
 	const char* w2 = &wStr2[0];
 
 	return findSubstring(w1, w2);
+}
+
+GLuint SmashScoreboard::LoadAndInitTex(const char* path)
+{
+	SDL_Surface* surf = IMG_Load(path);
+
+	static int idNum = 999;
+	idNum += 1;
+
+	GLuint id(idNum);
+
+	glGenTextures(1, &id);
+	glBindTexture(GL_TEXTURE_2D, id);
+
+	int mode = GL_RGB;
+	if (surf->format->BytesPerPixel == 4)
+		mode = GL_RGBA;
+
+	glTexImage2D(GL_TEXTURE_2D, 0, mode, surf->w, surf->h, 0, mode, GL_UNSIGNED_BYTE, surf->pixels);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	SDL_FreeSurface(surf);
+
+	return id;
 }
 
 void SmashScoreboard::uninit() {}

@@ -1,5 +1,8 @@
 #pragma once
+#include <filesystem>
+#include <fstream>
 #include <imgui_impl_sdl.h>
+#include <iostream>
 
 namespace SmashScoreboard
 {
@@ -19,7 +22,7 @@ namespace SmashScoreboard
 
 	public:
 		PlayerCharacterSelectWindow();
-		~PlayerCharacterSelectWindow();
+		~PlayerCharacterSelectWindow() {}
 
 		void perframe() override;
 	};

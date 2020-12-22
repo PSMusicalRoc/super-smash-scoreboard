@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui_impl_sdl.h>
+#include <glad/glad.h>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -10,16 +11,16 @@
 
 namespace SmashScoreboard
 {
-	bool init(const char* pathToList);
+	extern bool doneWithInit;
+	extern bool initSuccessful;
 
-	class CharacterName
+	void init(const char* pathToList);
+
+	struct CharacterName
 	{
-	private:
 		std::string text;
-	public:
 		CharacterName(std::string str);
 		~CharacterName();
-		const char* getText();
 	};
 
 	//Define variables that will help out other widgets
@@ -35,6 +36,8 @@ namespace SmashScoreboard
 
 	bool findSubstring(const char* w1, const char* w2);
 	bool findLowerSubstring(std::string str1, std::string str2);
+
+	GLuint LoadAndInitTex(const char* path);
 
 	void uninit();
 }
