@@ -42,6 +42,18 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+	if (renderer == NULL)
+	{
+		std::cout << "Error in SDL_CreateRenderer(): " << SDL_GetError() << std::endl;
+		return -1;
+	}
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+	//Load Loading image
+	SDL_Surface* loader_surf = IMG_Load("res/loader/loader.png");
+	SDL_Texture* loader = SDL_CreateTextureFromSurface(renderer, loader_surf);
+
 	//Create OPENGL Context for ImGui
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, context);
@@ -53,9 +65,49 @@ int main(int argc, char* argv[])
 	
 	glClearColor(0, 0, 0, 255);
 	
-
 	bool shouldBeRunning = true;
 	SDL_Event event;
+
+	//LOAD SMASH SCOREBOARD
+	SDL_Rect destRect;
+	destRect.w = loader_surf->w;
+	destRect.h = loader_surf->h;
+	destRect.x = (width / 2) - (destRect.w / 2);
+	destRect.y = (height / 2) - (destRect.h / 2);
+
+	SDL_RenderClear(renderer);
+	SDL_RenderCopy(renderer, loader, NULL, &destRect);
+	SDL_RenderPresent(renderer);
+
+	SmashScoreboard::init("res/ImageCache/Smash Ultimate Full Art/_CharList.txt");
+
+	//DESTROY RENDERER AND LOADER TEXTURES
+
+	SDL_DestroyRenderer(renderer);
+	SDL_FreeSurface(loader_surf);
+	SDL_DestroyTexture(loader);
+
+	/*//Setup SmashScoreboard Namespace
+	std::thread* SSC_INIT_THREAD = new std::thread(SmashScoreboard::init, "res/ImageCache/Smash Ultimate Full Art/_CharList.txt");
+
+	while (!SmashScoreboard::doneWithInit)
+	{
+		while (SDL_PollEvent(&event))
+		{
+			switch (event.type)
+			{
+			case SDL_QUIT:
+				shouldBeRunning = false;
+			}
+		}
+
+		//SDL_GL_BindTexture()
+	}
+	SSC_INIT_THREAD->join();*/
+
+	//NO STOP PLS
+
+	//DONE NOW
 
 	//SETUP IMGUI
 
@@ -79,41 +131,6 @@ int main(int argc, char* argv[])
 
 	//GAME LOOP
 
-	//Setup SmashScoreboard Namespace
-	std::thread* SSC_INIT_THREAD = new std::thread(SmashScoreboard::init, "res/ImageCache/Smash Ultimate Full Art/_CharList.txt");
-	
-	while (!SmashScoreboard::doneWithInit)
-	{
-		while (SDL_PollEvent(&event))
-		{
-			switch (event.type)
-			{
-			case SDL_QUIT:
-				shouldBeRunning = false;
-			}
-
-			ImGui_ImplSDL2_ProcessEvent(&event);
-		}
-
-
-		ImGui_ImplSDL2_NewFrame(window);
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui::NewFrame();
-
-		ImGui::StyleColorsLight();
-		ImGui::Begin("Waiting for initialization to finish...");
-		ImGui::Text("Waiting for initialization to finish...");
-		ImGui::End();
-
-		ImGui::EndFrame();
-
-		ImGui::Render();
-
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		SDL_GL_SwapWindow(window);
-	}
-	SSC_INIT_THREAD->join();
 	if (!SmashScoreboard::initSuccessful)
 	{
 		while (shouldBeRunning)

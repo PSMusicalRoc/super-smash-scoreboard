@@ -21,20 +21,6 @@ void SmashScoreboard::PlayerCharacterSelectWindow::perframe()
 	ImGui::InputTextWithHint("", "Player 1's character", pName, IM_ARRAYSIZE(pName)); ImGui::SameLine();
 	SmashScoreboard::HelpMarker("Input the name of Player 1's character (eg. Mario)");
 
-	if (ImGui::Button("Banjo"))
-	{
-		const auto copyOptions = fs::copy_options::overwrite_existing;
-		fs::path to = "Output/image0.png";
-		std::string frompath = "res/ImageCache/Smash Ultimate Full Art/";
-		frompath += "Banjo";
-		frompath += "/";
-		frompath += "Banjo";
-		frompath += "_01.png";
-		fs::path from = frompath;
-		std::cout << fs::copy_file(from, to, copyOptions) << std::endl;
-		std::cout << "Banjo" << std::endl;
-	}
-
 	for (int i = 0; i < SmashScoreboard::characterList.size(); i++)
 	{
 		CharacterName& cname = SmashScoreboard::characterList[i];
@@ -42,7 +28,8 @@ void SmashScoreboard::PlayerCharacterSelectWindow::perframe()
 		{
 			if (ImGui::CollapsingHeader(cname.text.c_str()))
 			{
-				if (ImGui::Button((cname.text + "##button").c_str()))
+				//if (ImGui::Button((cname.text + "##button").c_str()))
+				if (ImGui::ImageButton((ImTextureID)textureList[cname.text], ImVec2(64, 64)))
 				{
 					const auto copyOptions = fs::copy_options::overwrite_existing;
 					fs::path to = "Output/image0.png";

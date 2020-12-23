@@ -338,5 +338,7 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-/SmashScoreboard/res/ImageCache/Smash Ultimate Full Art
+
+# Resource files that don't need to be added to the repo yet
+/SmashScoreboard/res/ImageCache
 /SmashScoreboard/Output

@@ -3,6 +3,7 @@
 #include <SDL_image.h>
 
 std::vector<SmashScoreboard::CharacterName> SmashScoreboard::characterList;
+std::map<std::string, GLuint> SmashScoreboard::textureList;
 bool SmashScoreboard::doneWithInit = false;
 bool SmashScoreboard::initSuccessful = false;
 
@@ -29,17 +30,19 @@ void SmashScoreboard::init(const char* pathToFile)
 		}
 		else
 		{
-			/*for (int i = 0; i < characterList.size(); i++)
+			for (int i = 0; i < characterList.size(); i++)
 			{
-				std::string path("res/");
-				path += characterList[i].
+				std::string path("res/ImageCache/Smash Ultimate Full Art/");
+				path += characterList[i].text;
+				path += "/";
+				path += characterList[i].text;
+				path += "_01";
 				path += ".png";
 
 				GLuint loadedImage = LoadAndInitTex(path.c_str());
-				const char* name(Strings[i].getString());
 
-				Textures.emplace(name, loadedImage);
-			}*/
+				textureList.emplace(characterList[i].text, loadedImage);
+			}
 			initSuccessful = true;
 		}
 	}

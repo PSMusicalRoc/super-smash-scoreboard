@@ -4,6 +4,7 @@
 #include <imgui_impl_sdl.h>
 #include <glad/glad.h>
 #include <vector>
+#include <map>
 #include <string>
 #include <algorithm>
 #include <fstream>
@@ -27,6 +28,7 @@ namespace SmashScoreboard
 
 	//set in init()
 	extern std::vector<CharacterName> characterList;
+	extern std::map<std::string, GLuint> textureList;
 
 	//END VARIABLE DEF
 
