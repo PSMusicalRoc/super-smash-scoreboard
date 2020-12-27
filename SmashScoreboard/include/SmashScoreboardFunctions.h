@@ -20,6 +20,7 @@ namespace SmashScoreboard
 	struct CharacterName
 	{
 		std::string text;
+		int indexLow, numImages;
 		CharacterName(std::string str);
 		~CharacterName();
 	};
@@ -28,7 +29,7 @@ namespace SmashScoreboard
 
 	//set in init()
 	extern std::vector<CharacterName> characterList;
-	extern std::map<std::string, GLuint> textureList;
+	extern std::vector<GLuint> textureList;
 
 	//END VARIABLE DEF
 

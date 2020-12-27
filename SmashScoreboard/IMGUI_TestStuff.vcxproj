@@ -165,12 +165,20 @@
     <ClInclude Include="include\imgui_impl_sdl.h" />
     <ClInclude Include="include\SmashScoreboardFunctions.h" />
     <ClInclude Include="include\SmashScoreboardWidgets.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui.ini" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="res\font\ARLRDBD.TTF" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SmashScoreboard.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico" />
+    <Image Include="res\loader\icon.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

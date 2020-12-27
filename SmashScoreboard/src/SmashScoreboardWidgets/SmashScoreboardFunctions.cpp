@@ -3,7 +3,7 @@
 #include <SDL_image.h>
 
 std::vector<SmashScoreboard::CharacterName> SmashScoreboard::characterList;
-std::map<std::string, GLuint> SmashScoreboard::textureList;
+std::vector<GLuint> SmashScoreboard::textureList;
 bool SmashScoreboard::doneWithInit = false;
 bool SmashScoreboard::initSuccessful = false;
 
@@ -30,18 +30,81 @@ void SmashScoreboard::init(const char* pathToFile)
 		}
 		else
 		{
+			//Overall counter defining what the position of the
+			//texture is in textureList
+			int indexTex = 0;
+
 			for (int i = 0; i < characterList.size(); i++)
 			{
-				std::string path("res/ImageCache/Smash Ultimate Full Art/");
-				path += characterList[i].text;
-				path += "/";
-				path += characterList[i].text;
-				path += "_01";
-				path += ".png";
+				//Setup iterator variables
 
-				GLuint loadedImage = LoadAndInitTex(path.c_str());
+				//Defines whether the program should run another
+				//loop to find the next image for a character
+				bool moreImages = true;
 
-				textureList.emplace(characterList[i].text, loadedImage);
+				//Counts the current image number the character
+				//is on
+				int numImages = 1;
+
+				//Stores whether or not the character has had an
+				//image loaded yet
+				bool hasImageLoadedYet = false;
+
+				//Store first texture index in the character class
+				characterList[i].indexLow = indexTex;
+
+				while (moreImages)
+				{
+					//Currently hard limit at 99 images per character
+					if (numImages < 99)
+					{
+						//Generates a path for the next image to be loaded from
+						std::string path("res/ImageCache/Smash Ultimate Full Art/");
+						path += characterList[i].text;
+						path += "/";
+						path += characterList[i].text;
+						if (numImages < 10)
+							path += "_0" + std::to_string(numImages);
+						else if (10 <= numImages)
+							path += "_" + std::to_string(numImages);
+						path += ".png";
+
+
+						//Generates a GLuint for the texture and checks if
+						//the texture is NULL (i.e. an error)
+						GLuint loadedImage = LoadAndInitTex(path.c_str());
+						if (loadedImage != NULL)
+						{
+							textureList.push_back(loadedImage);
+
+							numImages += 1;
+							indexTex += 1;
+							hasImageLoadedYet = true;
+						}
+						//If NULL, then no more character images to load
+						else
+						{
+							moreImages = false;
+							if (hasImageLoadedYet)
+								numImages -= 1;
+							else
+							{
+								std::vector<CharacterName>::iterator charToRemove = characterList.begin() + i;
+
+								characterList.erase(charToRemove);
+								i--;
+							}
+						}
+					}
+					//If num > 99, then no more character images
+					else
+						moreImages = false;
+				}
+
+				//Sets the number of images for this
+				//character slot
+				if (hasImageLoadedYet)
+					characterList[i].numImages = numImages;
 			}
 			initSuccessful = true;
 		}
@@ -176,28 +239,33 @@ GLuint SmashScoreboard::LoadAndInitTex(const char* path)
 {
 	SDL_Surface* surf = IMG_Load(path);
 
-	static int idNum = 999;
-	idNum += 1;
+	if (surf != NULL)
+	{
+		static int idNum = 999;
+		idNum += 1;
 
-	GLuint id(idNum);
+		GLuint id(idNum);
 
-	glGenTextures(1, &id);
-	glBindTexture(GL_TEXTURE_2D, id);
+		glGenTextures(1, &id);
+		glBindTexture(GL_TEXTURE_2D, id);
 
-	int mode = GL_RGB;
-	if (surf->format->BytesPerPixel == 4)
-		mode = GL_RGBA;
+		int mode = GL_RGB;
+		if (surf->format->BytesPerPixel == 4)
+			mode = GL_RGBA;
 
-	glTexImage2D(GL_TEXTURE_2D, 0, mode, surf->w, surf->h, 0, mode, GL_UNSIGNED_BYTE, surf->pixels);
+		glTexImage2D(GL_TEXTURE_2D, 0, mode, surf->w, surf->h, 0, mode, GL_UNSIGNED_BYTE, surf->pixels);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	SDL_FreeSurface(surf);
+		SDL_FreeSurface(surf);
 
-	return id;
+		return id;
+	}
+
+	return NULL;
 }
 
 void SmashScoreboard::uninit() {}

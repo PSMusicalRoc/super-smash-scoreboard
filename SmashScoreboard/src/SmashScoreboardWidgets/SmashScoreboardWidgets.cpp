@@ -29,18 +29,27 @@ void SmashScoreboard::PlayerCharacterSelectWindow::perframe()
 			if (ImGui::CollapsingHeader(cname.text.c_str()))
 			{
 				//if (ImGui::Button((cname.text + "##button").c_str()))
-				if (ImGui::ImageButton((ImTextureID)textureList[cname.text], ImVec2(64, 64)))
+				for (int j = cname.indexLow; j < cname.indexLow + cname.numImages; j++)
 				{
-					const auto copyOptions = fs::copy_options::overwrite_existing;
-					fs::path to = "Output/image0.png";
-					std::string frompath = "res/ImageCache/Smash Ultimate Full Art/";
-					frompath += SmashScoreboard::characterList[i].text.c_str();
-					frompath += "/";
-					frompath += SmashScoreboard::characterList[i].text.c_str();
-					frompath += "_01.png";
-					fs::path from = frompath;
-					std::cout << fs::copy_file(from, to, copyOptions) << std::endl;
-					std::cout << SmashScoreboard::characterList[i].text.c_str() << std::endl;
+					if (ImGui::ImageButton((ImTextureID)textureList[j], ImVec2(64, 64)))
+					{
+						int imageNum = j - cname.indexLow + 1;
+
+						const auto copyOptions = fs::copy_options::overwrite_existing;
+						fs::path to = "Output/image0.png";
+						std::string frompath = "res/ImageCache/Smash Ultimate Full Art/";
+						frompath += SmashScoreboard::characterList[i].text.c_str();
+						frompath += "/";
+						frompath += SmashScoreboard::characterList[i].text.c_str();
+						if (imageNum < 10)
+							frompath += "_0" + std::to_string(imageNum);
+						else if (imageNum >= 10)
+							frompath += "_" + std::to_string(imageNum);
+						frompath += ".png";
+						fs::path from = frompath;
+						std::cout << fs::copy_file(from, to, copyOptions) << std::endl;
+						std::cout << SmashScoreboard::characterList[i].text.c_str() << std::endl;
+					}
 				}
 			}
 		}

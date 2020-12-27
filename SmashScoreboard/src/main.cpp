@@ -30,6 +30,8 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+	SDL_Surface* winicon = IMG_Load("res/loader/icon.png");
+
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	SDL_Window* window = SDL_CreateWindow("Smash Scoreboard I dunno",
@@ -41,6 +43,9 @@ int main(int argc, char* argv[])
 		std::cout << "Error in SDL_CreateWindow(): " << SDL_GetError() << std::endl;
 		return -1;
 	}
+
+	SDL_SetWindowIcon(window, winicon);
+	SDL_FreeSurface(winicon);
 
 	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
 	if (renderer == NULL)

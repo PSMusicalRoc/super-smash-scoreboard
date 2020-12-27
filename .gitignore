@@ -342,3 +342,7 @@ healthchecksdb
 # Resource files that don't need to be added to the repo yet
 /SmashScoreboard/res/ImageCache
 /SmashScoreboard/Output
+/SmashScoreboard/res/loader
+/SmashScoreboard/resource.h
+/SmashScoreboard/SmashScoreboard.rc
+/SmashScoreboard/icon1.ico
