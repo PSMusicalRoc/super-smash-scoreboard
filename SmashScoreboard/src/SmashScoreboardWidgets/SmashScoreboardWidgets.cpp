@@ -26,9 +26,9 @@ SmashScoreboard::SmashScoreboardWindow* SmashScoreboard::SmashScoreboardWindow::
 //
 */
 SmashScoreboard::PlayerOneSelectWindow::PlayerOneSelectWindow(std::string winName, int styleIndex)
-	:SmashScoreboardWindow(), pName(""), windowName(winName), styleIndex(styleIndex)
+	:SmashScoreboardWindow(winName), pName(""), styleIndex(styleIndex)
 {
-	if (this->windowName == "")
+	if (this->windowName == "" or this->windowName == "default")
 		this->windowName == "Character Selection Window";
 }
 
@@ -90,7 +90,7 @@ void SmashScoreboard::PlayerOneSelectWindow::perframe()
 // [SECTION] AddPlayerSelectWindowWindow()
 
 SmashScoreboard::AddPlayerSelectWindowWindow::AddPlayerSelectWindowWindow()
-	:SmashScoreboardWindow(), windowName("") {}
+	:SmashScoreboardWindow("Create New Character Select Window"), newWindowName("") {}
 
 SmashScoreboard::AddPlayerSelectWindowWindow* SmashScoreboard::AddPlayerSelectWindowWindow::CreateWindow()
 {
@@ -107,7 +107,7 @@ void SmashScoreboard::AddPlayerSelectWindowWindow::perframe()
 
 		ImGui::Begin(("Add a new Character Selector Window" + this->windowTitleIdentifier).c_str(), &this->isVisible, ImGuiWindowFlags_AlwaysAutoResize);
 		const char* items[] = { "Red", "Blue", "Yellow", "Green"};
-		static int item_current_idx = 0;                    // Here our selection data is an index.
+		int item_current_idx = 0;                    // Here our selection data is an index.
 		const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
 		if (ImGui::BeginCombo("New Window Color", combo_label))
 		{
@@ -127,17 +127,39 @@ void SmashScoreboard::AddPlayerSelectWindowWindow::perframe()
 			ImGui::EndCombo();
 		}
 
-		ImGui::InputText("Name of new Window", windowName, IM_ARRAYSIZE(windowName));
+		ImGui::InputText("Name of new Window", newWindowName, IM_ARRAYSIZE(newWindowName));
 
 		if (ImGui::Button("Cancel"))
 			this->isVisible = false;
 		ImGui::SameLine();
-		if (ImGui::Button("Create Window!"))
-		{
-			PlayerOneSelectWindow::CreateWindow(std::string(this->windowName), this->styleIndex);
-			this->isVisible = false;
-		}
 
+		bool shouldDisable = checkForTakenIdentifier(std::string(this->newWindowName));
+
+		if (!shouldDisable)
+		{
+			if (ImGui::Button("Create Window!"))
+			{
+				PlayerOneSelectWindow::CreateWindow(std::string(this->newWindowName), this->styleIndex);
+				this->isVisible = false;
+			}
+		}
+		else
+		{
+			SmashScoreboard::HelpMarker("Choose a name not already taken by another window and not 'default'");
+		}
 		ImGui::End();
 	}
+}
+
+bool SmashScoreboard::checkForTakenIdentifier(std::string ident)
+{
+	if (ident == "default")
+		return true;
+
+	for (int i = 0; i < windowList.size(); i++)
+	{
+		if (windowList[i].get()->windowName == ident)
+			return true;
+	}
+	return false;
 }

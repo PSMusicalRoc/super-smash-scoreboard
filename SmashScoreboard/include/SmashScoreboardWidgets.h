@@ -12,8 +12,10 @@ namespace SmashScoreboard
 
 	struct SmashScoreboardWindow
 	{
+		std::string windowName;
+
 		//Please don't use this, use CreateWindow instead
-		SmashScoreboardWindow()
+		SmashScoreboardWindow(std::string winName = "default") : windowName(winName)
 		{
 			windowTitleIdentifier = "##" + std::to_string(UNIQUE_INT_CTR);
 			UNIQUE_INT_CTR++;
@@ -50,14 +52,13 @@ namespace SmashScoreboard
 	class PlayerOneSelectWindow : public SmashScoreboardWindow
 	{
 	private:
-		std::string windowName;
-
 		//Stores the input box data
 		char pName[128];
 
 		int styleIndex;
 
 	public:
+		
 		PlayerOneSelectWindow(std::string winName = "", int styleIndex = 1);
 		~PlayerOneSelectWindow() {}
 		static PlayerOneSelectWindow* CreateWindow(std::string winName = "", int styleIndex = 1);
@@ -77,7 +78,7 @@ namespace SmashScoreboard
 		int styleIndex = 1;
 
 		//Name of the new Window
-		char windowName[128];
+		char newWindowName[128];
 
 	public:
 		AddPlayerSelectWindowWindow();
@@ -88,4 +89,6 @@ namespace SmashScoreboard
 	};
 
 	extern std::vector<std::shared_ptr<SmashScoreboardWindow>> windowList;
+
+	bool checkForTakenIdentifier(std::string ident);
 }

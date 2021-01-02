@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui.ini" />
+    <None Include="default.sssb" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="res\font\ARLRDBD.TTF" />

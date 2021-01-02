@@ -6,11 +6,13 @@
 #include <imgui_impl_opengl3.h>
 #include <glad/glad.h>
 #include <iostream>
-#include <thread>
+#include <fstream>
 #include <typeinfo>
 
 #include "SmashScoreboardFunctions.h"
 #include "SmashScoreboardWidgets.h"
+
+namespace fs = std::filesystem;
 
 int main(int argc, char* argv[])
 {
@@ -187,7 +189,70 @@ int main(int argc, char* argv[])
 	}
 
 	//Create Windows
-	SmashScoreboard::PlayerOneSelectWindow::CreateWindow("Helfen");
+	
+	std::fstream defaultLayout;
+	defaultLayout.open("default.sssb", std::ios::in);
+	if (defaultLayout.is_open())
+	{
+		//defines whether or not to search for start
+		//or to search for attributes
+		bool isWindowStarted = false;
+
+		enum { CHARACTERWINDOW = 1 };
+
+		int windowType;
+		int styleIndex = 1;
+		std::string windowName = "default";
+
+		//start reading lines
+		std::string line;
+		while (std::getline(defaultLayout, line))
+		{
+			if (!isWindowStarted)
+			{
+				if (line.find("start") == 0 && line.find("start") != line.npos)
+				{
+					std::string windowTypeString = line.replace(line.find("start "), std::string("start ").length(), "");
+					if (windowTypeString == "CharacterWindow")
+					{
+						windowType = CHARACTERWINDOW;
+						isWindowStarted = true;
+					}
+				}
+			}
+			else
+			{
+				if (line.find("end") == 0 && line.find("end") != line.npos)
+				{
+					if (!SmashScoreboard::checkForTakenIdentifier(windowName))
+					{
+						switch (windowType)
+						{
+						case CHARACTERWINDOW:
+							SmashScoreboard::PlayerOneSelectWindow::CreateWindow(windowName, styleIndex);
+							break;
+						}
+					}
+					isWindowStarted = false;
+				}
+				else if (line.find("styleIndex") == 0 && line.find("styleIndex") != line.npos)
+				{
+					std::string datastring = line.replace(line.find("styleIndex "), std::string("styleIndex ").length(), "");
+					int data = std::stoi(datastring);
+					if (0 < data < 5)
+						styleIndex = data;
+					else
+						styleIndex = 1;
+				}
+				else if (line.find("windowName") == 0 && line.find("windowName") != line.npos)
+				{
+					std::string datastring = line.replace(line.find("windowName "), std::string("windowName ").length(), "");
+					if (!SmashScoreboard::checkForTakenIdentifier(datastring))
+						windowName = datastring;
+				}
+			}
+		}
+	}
 
 	while (shouldBeRunning)
 	{
