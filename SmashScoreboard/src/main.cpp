@@ -7,6 +7,7 @@
 #include <glad/glad.h>
 #include <iostream>
 #include <thread>
+#include <typeinfo>
 
 #include "SmashScoreboardFunctions.h"
 #include "SmashScoreboardWidgets.h"
@@ -21,7 +22,10 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+	//Window width
 	int width = 1280;
+
+	//Window height
 	int height = 720;
 
 	if (IMG_Init(IMG_INIT_PNG) == 0)
@@ -74,6 +78,8 @@ int main(int argc, char* argv[])
 	SDL_Event event;
 
 	//LOAD SMASH SCOREBOARD
+	GLuint backgroundImage = SmashScoreboard::LoadAndInitTex("res/loader/background.png");
+
 	SDL_Rect destRect;
 	destRect.w = loader_surf->w;
 	destRect.h = loader_surf->h;
@@ -92,26 +98,6 @@ int main(int argc, char* argv[])
 	SDL_FreeSurface(loader_surf);
 	SDL_DestroyTexture(loader);
 
-	/*//Setup SmashScoreboard Namespace
-	std::thread* SSC_INIT_THREAD = new std::thread(SmashScoreboard::init, "res/ImageCache/Smash Ultimate Full Art/_CharList.txt");
-
-	while (!SmashScoreboard::doneWithInit)
-	{
-		while (SDL_PollEvent(&event))
-		{
-			switch (event.type)
-			{
-			case SDL_QUIT:
-				shouldBeRunning = false;
-			}
-		}
-
-		//SDL_GL_BindTexture()
-	}
-	SSC_INIT_THREAD->join();*/
-
-	//NO STOP PLS
-
 	//DONE NOW
 
 	//SETUP IMGUI
@@ -129,10 +115,9 @@ int main(int argc, char* argv[])
 	ImGui_ImplSDL2_InitForOpenGL(window, context);
 	ImGui_ImplOpenGL3_Init();
 
-	//SETUP WINDOW STYLES
-	ImGui::StyleColorsLight();
-	ImGuiStyle& defaultStyle = ImGui::GetStyle();
-	ImGuiStyle& p1CharStyle = ImGui::GetStyle();
+	//Add a nullptr to the beginning of windowList
+	//so that it doesn't crash?
+	//SmashScoreboard::windowList.push_back(nullptr);
 
 	//GAME LOOP
 
@@ -146,6 +131,14 @@ int main(int argc, char* argv[])
 				{
 				case SDL_QUIT:
 					shouldBeRunning = false;
+					break;
+				case SDL_WINDOWEVENT:
+					switch (event.window.event) {
+					case SDL_WINDOWEVENT_SIZE_CHANGED:
+						width = event.window.data1;
+						height = event.window.data2;
+						break;
+					}
 				}
 
 				ImGui_ImplSDL2_ProcessEvent(&event);
@@ -156,23 +149,45 @@ int main(int argc, char* argv[])
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui::NewFrame();
 
-			ImGui::StyleColorsLight();
+			ImGui::BeginMainMenuBar();
+
+			if (ImGui::BeginMenu("File"))
+			{
+				if (ImGui::MenuItem("Quit"))
+					shouldBeRunning = false;
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndMainMenuBar();
+
+			//ImGui::StyleColorsLight();
 			ImGui::Begin("Failed to initialize");
 			ImGui::Text("Smash Scoreboard failed to initialize...");
 			ImGui::Text("Please make sure that your path to the .txt file is correct!");
+
+#ifndef NDEBUG
+			//ImGui::StyleColorsLight();
+			ImGui::ShowDemoWindow();
+#endif
+
 			ImGui::End();
+
+			auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
+			backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(width, height), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
 
 			ImGui::EndFrame();
 
 			ImGui::Render();
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 			SDL_GL_SwapWindow(window);
 		}
 	}
 
-	SmashScoreboard::PlayerCharacterSelectWindow* player1CharWindow = new SmashScoreboard::PlayerCharacterSelectWindow();
+	//Create Windows
+	SmashScoreboard::PlayerOneSelectWindow::CreateWindow("Helfen");
 
 	while (shouldBeRunning)
 	{
@@ -182,6 +197,14 @@ int main(int argc, char* argv[])
 			{
 			case SDL_QUIT:
 				shouldBeRunning = false;
+				break;
+			case SDL_WINDOWEVENT:
+				switch (event.window.event) {
+				case SDL_WINDOWEVENT_SIZE_CHANGED:
+					width = event.window.data1;
+					height = event.window.data2;
+					break;
+				}
 			}
 
 			ImGui_ImplSDL2_ProcessEvent(&event);
@@ -191,18 +214,64 @@ int main(int argc, char* argv[])
 		ImGui_ImplSDL2_NewFrame(window);
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui::NewFrame();
+
+		//Menu Bar
+
+		ImGui::StyleColorsDark();
+
+		ImGui::BeginMainMenuBar();
+
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Quit"))
+				shouldBeRunning = false;
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Add Window"))
+		{
+			if (ImGui::MenuItem("Add Character Select Window"))
+			{
+				SmashScoreboard::AddPlayerSelectWindowWindow::CreateWindow();
+			}
+
+			ImGui::EndMenu();
+		}
+
+		ImGui::EndMainMenuBar();
+
+		//Frame
 		
+#ifndef NDEBUG
 		ImGui::StyleColorsLight();
 		ImGui::ShowDemoWindow();
+#endif
+		if (SmashScoreboard::windowList.size() != 0)
+		{
+			for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
+			{
+				if (!SmashScoreboard::windowList[i].get()->isVisible)
+				{
+					SmashScoreboard::SmashScoreboardWindow::DeleteWindow(SmashScoreboard::windowList[i].get(), SmashScoreboard::windowList);
+					i--;
+					if (SmashScoreboard::windowList.size() <= 0)
+						goto NoWindows;
+				}
+				else
+				{
+					SmashScoreboard::windowList[i].get()->perframe();
+				}
 
-		SmashScoreboard::StyleColorsPlayer1();
-		player1CharWindow->perframe();
+			}
+		}
+		NoWindows: auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
+		backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(width, height), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
 
 		ImGui::EndFrame();
 
 		ImGui::Render();
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		SDL_GL_SwapWindow(window);
 	}

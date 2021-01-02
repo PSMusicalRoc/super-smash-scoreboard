@@ -33,7 +33,12 @@ namespace SmashScoreboard
 
 	//END VARIABLE DEF
 
-	void StyleColorsPlayer1(ImGuiStyle* dst = (ImGuiStyle*) 0);
+	void StyleColorsRed(ImGuiStyle* dst = (ImGuiStyle*)0);
+	void StyleColorsBlue(ImGuiStyle* dst = (ImGuiStyle*)0);
+	void StyleColorsYellow(ImGuiStyle* dst = (ImGuiStyle*)0);
+	void StyleColorsGreen(ImGuiStyle* dst = (ImGuiStyle*)0);
+
+	void StyleColorsFromIndex(int index);
 
 	void HelpMarker(const char* desc);
 

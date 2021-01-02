@@ -3,6 +3,20 @@
 
 namespace fs = std::filesystem;
 
+//Set the UNIQUE IDENTIFIER before any new windows
+unsigned int SmashScoreboard::UNIQUE_INT_CTR = 0;
+
+std::vector<std::shared_ptr<SmashScoreboard::SmashScoreboardWindow>> SmashScoreboard::windowList;
+
+SmashScoreboard::SmashScoreboardWindow* SmashScoreboard::SmashScoreboardWindow::CreateWindow()
+{
+	std::shared_ptr<SmashScoreboardWindow> win = std::make_shared<SmashScoreboardWindow>();
+	windowList.push_back(win);
+	return win.get();
+}
+
+// [SECTION] PlayerOneSelectWindow()
+
 /*
 //
 //Player Character Selection Window
@@ -11,73 +25,119 @@ namespace fs = std::filesystem;
 //the active character and skin combo to update a file with.
 //
 */
-SmashScoreboard::PlayerCharacterSelectWindow::PlayerCharacterSelectWindow()
-	:SmashScoreboardWindow(), pName("") {}
-
-
-void SmashScoreboard::PlayerCharacterSelectWindow::perframe()
+SmashScoreboard::PlayerOneSelectWindow::PlayerOneSelectWindow(std::string winName, int styleIndex)
+	:SmashScoreboardWindow(), pName(""), windowName(winName), styleIndex(styleIndex)
 {
-	ImGui::Begin("Character Selector Player 1");
-	ImGui::InputTextWithHint("", "Player 1's character", pName, IM_ARRAYSIZE(pName)); ImGui::SameLine();
-	SmashScoreboard::HelpMarker("Input the name of Player 1's character (eg. Mario)");
+	if (this->windowName == "")
+		this->windowName == "Character Selection Window";
+}
 
-	for (int i = 0; i < SmashScoreboard::characterList.size(); i++)
+SmashScoreboard::PlayerOneSelectWindow* SmashScoreboard::PlayerOneSelectWindow::CreateWindow(std::string winName, int styleIndex)
+{
+	std::shared_ptr<SmashScoreboardWindow> win = std::make_shared<PlayerOneSelectWindow>(winName, styleIndex);
+	windowList.push_back(win);
+	return (PlayerOneSelectWindow*)win.get();
+}
+
+void SmashScoreboard::PlayerOneSelectWindow::perframe()
+{
+	if (this->isVisible)
 	{
-		CharacterName& cname = SmashScoreboard::characterList[i];
-		if (SmashScoreboard::findLowerSubstring(cname.text.c_str(), pName))
-		{
-			if (ImGui::CollapsingHeader(cname.text.c_str()))
-			{
-				//if (ImGui::Button((cname.text + "##button").c_str()))
-				for (int j = cname.indexLow; j < cname.indexLow + cname.numImages; j++)
-				{
-					if (ImGui::ImageButton((ImTextureID)textureList[j], ImVec2(64, 64)))
-					{
-						int imageNum = j - cname.indexLow + 1;
+		StyleColorsFromIndex(this->styleIndex);
 
-						const auto copyOptions = fs::copy_options::overwrite_existing;
-						fs::path to = "Output/image0.png";
-						std::string frompath = "res/ImageCache/Smash Ultimate Full Art/";
-						frompath += SmashScoreboard::characterList[i].text.c_str();
-						frompath += "/";
-						frompath += SmashScoreboard::characterList[i].text.c_str();
-						if (imageNum < 10)
-							frompath += "_0" + std::to_string(imageNum);
-						else if (imageNum >= 10)
-							frompath += "_" + std::to_string(imageNum);
-						frompath += ".png";
-						fs::path from = frompath;
-						std::cout << fs::copy_file(from, to, copyOptions) << std::endl;
-						std::cout << SmashScoreboard::characterList[i].text.c_str() << std::endl;
+		ImGui::Begin((this->windowName + "###" + this->windowName).c_str() , &(this->isVisible));
+		ImGui::InputTextWithHint("", "Player 1's character", pName, IM_ARRAYSIZE(pName)); ImGui::SameLine();
+		SmashScoreboard::HelpMarker("Input the name of Player 1's character (eg. Mario)");
+
+		for (int i = 0; i < SmashScoreboard::characterList.size(); i++)
+		{
+			CharacterName& cname = SmashScoreboard::characterList[i];
+			if (SmashScoreboard::findLowerSubstring(cname.text.c_str(), pName))
+			{
+				if (ImGui::CollapsingHeader(cname.text.c_str()))
+				{
+					//if (ImGui::Button((cname.text + "##button").c_str()))
+					for (int j = cname.indexLow; j < cname.indexLow + cname.numImages; j++)
+					{
+						if (ImGui::ImageButton((ImTextureID)textureList[j], ImVec2(64, 64)))
+						{
+							int imageNum = j - cname.indexLow + 1;
+
+							const auto copyOptions = fs::copy_options::overwrite_existing;
+							std::string topath = "Output/" + this->windowName + ".png";
+							fs::path to = topath;
+							std::string frompath = "res/ImageCache/Smash Ultimate Full Art/";
+							frompath += SmashScoreboard::characterList[i].text.c_str();
+							frompath += "/";
+							frompath += SmashScoreboard::characterList[i].text.c_str();
+							if (imageNum < 10)
+								frompath += "_0" + std::to_string(imageNum);
+							else if (imageNum >= 10)
+								frompath += "_" + std::to_string(imageNum);
+							frompath += ".png";
+							fs::path from = frompath;
+							std::cout << fs::copy_file(from, to, copyOptions) << std::endl;
+							std::cout << SmashScoreboard::characterList[i].text.c_str() << std::endl;
+						}
 					}
 				}
 			}
 		}
+		ImGui::End();
 	}
-
-	ImGui::End();
 }
 
-void SmashScoreboard::PP()
+// [SECTION] AddPlayerSelectWindowWindow()
+
+SmashScoreboard::AddPlayerSelectWindowWindow::AddPlayerSelectWindowWindow()
+	:SmashScoreboardWindow(), windowName("") {}
+
+SmashScoreboard::AddPlayerSelectWindowWindow* SmashScoreboard::AddPlayerSelectWindowWindow::CreateWindow()
 {
-	ImGui::Begin("Character Selector Player 1");
+	std::shared_ptr<SmashScoreboardWindow> win = std::make_shared<AddPlayerSelectWindowWindow>();
+	windowList.push_back(win);
+	return (AddPlayerSelectWindowWindow*)win.get();
+}
 
-	static char p1Name[128] = "";
-	ImGui::InputTextWithHint("", "Player 1's character", p1Name, IM_ARRAYSIZE(p1Name)); ImGui::SameLine();
-	SmashScoreboard::HelpMarker("Input the name of Player 1's character (eg. Mario)");
-
-	const char* names[] = { "Mario", "Link", "Kirby" };
-
-	for (int i = 0; i < IM_ARRAYSIZE(names); i++)
+void SmashScoreboard::AddPlayerSelectWindowWindow::perframe()
+{
+	if (this->isVisible)
 	{
-		if (SmashScoreboard::findLowerSubstring(names[i], p1Name))
-		{
-			if (ImGui::CollapsingHeader(names[i]))
-			{
-				ImGui::Button(names[i]);
-			}
-		}
-	}
+		StyleColorsFromIndex(this->styleIndex);
 
-	ImGui::End();
+		ImGui::Begin(("Add a new Character Selector Window" + this->windowTitleIdentifier).c_str(), &this->isVisible, ImGuiWindowFlags_AlwaysAutoResize);
+		const char* items[] = { "Red", "Blue", "Yellow", "Green"};
+		static int item_current_idx = 0;                    // Here our selection data is an index.
+		const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
+		if (ImGui::BeginCombo("New Window Color", combo_label))
+		{
+			for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+			{
+				const bool is_selected = (item_current_idx == n);
+				if (ImGui::Selectable(items[n], is_selected))
+				{
+					item_current_idx = n;
+					this->styleIndex = n + 1;
+				}
+
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+
+		ImGui::InputText("Name of new Window", windowName, IM_ARRAYSIZE(windowName));
+
+		if (ImGui::Button("Cancel"))
+			this->isVisible = false;
+		ImGui::SameLine();
+		if (ImGui::Button("Create Window!"))
+		{
+			PlayerOneSelectWindow::CreateWindow(std::string(this->windowName), this->styleIndex);
+			this->isVisible = false;
+		}
+
+		ImGui::End();
+	}
 }
