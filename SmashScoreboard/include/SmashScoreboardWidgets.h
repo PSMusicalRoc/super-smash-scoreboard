@@ -5,10 +5,18 @@
 #include <imgui_impl_sdl.h>
 #include <iostream>
 
+//for current working directory stuff
+#include <direct.h>
+#define GetCurrentDir _getcwd
+
 namespace SmashScoreboard
 {
 	//Int holder to make unique window instances
 	extern unsigned int UNIQUE_INT_CTR;
+	
+	//Boolean that defines whether or not to show all the windows
+	//or just the file select window
+	extern bool ISFILEWINDOWOPEN;
 
 	struct SmashScoreboardWindow
 	{
@@ -47,6 +55,37 @@ namespace SmashScoreboard
 
 		bool isVisible = true;
 		virtual void perframe() {};
+	};
+
+	class OpenFileWindow : public SmashScoreboardWindow
+	{
+	private:
+		static std::shared_ptr<OpenFileWindow> filewindowptr;
+		char folderpathbuf[FILENAME_MAX];
+		char filenamebuf[FILENAME_MAX];
+
+		std::string readableFolderPath;
+		std::string readableFileName;
+	
+	public:
+		OpenFileWindow()
+			:SmashScoreboardWindow("Open File"), filenamebuf("")
+		{
+			GetCurrentDir(folderpathbuf, FILENAME_MAX);
+			readableFolderPath = folderpathbuf;
+			readableFileName = filenamebuf;
+		}
+		~OpenFileWindow() {}
+
+		static OpenFileWindow* CreateWindow();
+		static void CloseWindow();
+
+		std::string windowTitleIdentifier;
+
+		bool isVisible = true;
+		void perframe() override;
+
+		static OpenFileWindow* getWindowPtr() { return filewindowptr.get(); }
 	};
 
 	class PlayerOneSelectWindow : public SmashScoreboardWindow

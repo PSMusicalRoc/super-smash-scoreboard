@@ -15,6 +15,15 @@ namespace SmashScoreboard
 	extern bool doneWithInit;
 	extern bool initSuccessful;
 
+	extern int windowWidth;
+	extern int windowHeight;
+
+	extern GLuint FileSelect_GoImage;
+	extern GLuint FileSelect_UpOneLevelImage;
+	extern GLuint FileSelect_Folder;
+	extern GLuint FileSelect_File;
+
+	void internalsInit();
 	void init(const char* pathToList);
 
 	struct CharacterName
@@ -37,6 +46,7 @@ namespace SmashScoreboard
 	void StyleColorsBlue(ImGuiStyle* dst = (ImGuiStyle*)0);
 	void StyleColorsYellow(ImGuiStyle* dst = (ImGuiStyle*)0);
 	void StyleColorsGreen(ImGuiStyle* dst = (ImGuiStyle*)0);
+	void StyleColorsFileOpenMenu(ImGuiStyle* dst = (ImGuiStyle*)0);
 
 	void StyleColorsFromIndex(int index);
 
@@ -45,7 +55,7 @@ namespace SmashScoreboard
 	bool findSubstring(const char* w1, const char* w2);
 	bool findLowerSubstring(std::string str1, std::string str2);
 
-	GLuint LoadAndInitTex(const char* path);
+	GLuint LoadAndInitTex(const char* path, GLuint customID = 0);
 
 	void uninit();
 }

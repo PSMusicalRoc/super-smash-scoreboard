@@ -6,114 +6,139 @@ std::vector<SmashScoreboard::CharacterName> SmashScoreboard::characterList;
 std::vector<GLuint> SmashScoreboard::textureList;
 bool SmashScoreboard::doneWithInit = false;
 bool SmashScoreboard::initSuccessful = false;
+int SmashScoreboard::windowWidth = 1280;
+int SmashScoreboard::windowHeight = 720;
+GLuint SmashScoreboard::FileSelect_GoImage = 0;
+GLuint SmashScoreboard::FileSelect_UpOneLevelImage = 0;
+GLuint SmashScoreboard::FileSelect_Folder = 0;
+GLuint SmashScoreboard::FileSelect_File = 0;
 
 SmashScoreboard::CharacterName::CharacterName(std::string str)
 	:text(str) {}
 
 SmashScoreboard::CharacterName::~CharacterName() {}
 
+void SmashScoreboard::internalsInit()
+{
+	FileSelect_GoImage = LoadAndInitTex("res/internals/Go.png", 100);
+	if (FileSelect_GoImage == 0)
+		doneWithInit = true;
+	FileSelect_UpOneLevelImage = LoadAndInitTex("res/internals/Up_One_Level.png", 101);
+	if (FileSelect_UpOneLevelImage == 0)
+		doneWithInit = true;
+	FileSelect_Folder = LoadAndInitTex("res/internals/Folder.png", 102);
+	if (FileSelect_Folder == 0)
+		doneWithInit = true;
+	FileSelect_File = LoadAndInitTex("res/internals/File.png", 103);
+	if (FileSelect_File == 0)
+		doneWithInit = true;
+}
+
 void SmashScoreboard::init(const char* pathToFile)
 {
-	std::fstream characterListFile;
-	characterListFile.open(pathToFile, std::ios::in);
-	if (characterListFile.is_open())
+	if (!doneWithInit)
 	{
-		std::string line;
-		while (std::getline(characterListFile, line))
+		std::fstream characterListFile;
+		characterListFile.open(pathToFile, std::ios::in);
+		if (characterListFile.is_open())
 		{
-			characterList.push_back(CharacterName(line));
-		}
+			std::string line;
+			while (std::getline(characterListFile, line))
+			{
+				characterList.push_back(CharacterName(line));
+			}
 
-		if (characterList.size() == 0)
-		{
-			initSuccessful = false;
+			if (characterList.size() == 0)
+			{
+				initSuccessful = false;
+			}
+			else
+			{
+				//Overall counter defining what the position of the
+				//texture is in textureList
+				int indexTex = 0;
+
+				for (int i = 0; i < characterList.size(); i++)
+				{
+					//Setup iterator variables
+
+					//Defines whether the program should run another
+					//loop to find the next image for a character
+					bool moreImages = true;
+
+					//Counts the current image number the character
+					//is on
+					int numImages = 1;
+
+					//Stores whether or not the character has had an
+					//image loaded yet
+					bool hasImageLoadedYet = false;
+
+					//Store first texture index in the character class
+					characterList[i].indexLow = indexTex;
+
+					while (moreImages)
+					{
+						//Currently hard limit at 99 images per character
+						if (numImages < 99)
+						{
+							//Generates a path for the next image to be loaded from
+							std::string path("res/ImageCache/Smash Ultimate Full Art/");
+							path += characterList[i].text;
+							path += "/";
+							path += characterList[i].text;
+							if (numImages < 10)
+								path += "_0" + std::to_string(numImages);
+							else if (10 <= numImages)
+								path += "_" + std::to_string(numImages);
+							path += ".png";
+
+
+							//Generates a GLuint for the texture and checks if
+							//the texture is NULL (i.e. an error)
+							GLuint loadedImage = LoadAndInitTex(path.c_str());
+							if (loadedImage != NULL)
+							{
+								textureList.push_back(loadedImage);
+
+								numImages += 1;
+								indexTex += 1;
+								hasImageLoadedYet = true;
+							}
+							//If NULL, then no more character images to load
+							else
+							{
+								moreImages = false;
+								if (hasImageLoadedYet)
+									numImages -= 1;
+								else
+								{
+									std::vector<CharacterName>::iterator charToRemove = characterList.begin() + i;
+
+									characterList.erase(charToRemove);
+									i--;
+								}
+							}
+						}
+						//If num > 99, then no more character images
+						else
+							moreImages = false;
+					}
+
+					//Sets the number of images for this
+					//character slot
+					if (hasImageLoadedYet)
+						characterList[i].numImages = numImages;
+				}
+				initSuccessful = true;
+			}
 		}
 		else
 		{
-			//Overall counter defining what the position of the
-			//texture is in textureList
-			int indexTex = 0;
-
-			for (int i = 0; i < characterList.size(); i++)
-			{
-				//Setup iterator variables
-
-				//Defines whether the program should run another
-				//loop to find the next image for a character
-				bool moreImages = true;
-
-				//Counts the current image number the character
-				//is on
-				int numImages = 1;
-
-				//Stores whether or not the character has had an
-				//image loaded yet
-				bool hasImageLoadedYet = false;
-
-				//Store first texture index in the character class
-				characterList[i].indexLow = indexTex;
-
-				while (moreImages)
-				{
-					//Currently hard limit at 99 images per character
-					if (numImages < 99)
-					{
-						//Generates a path for the next image to be loaded from
-						std::string path("res/ImageCache/Smash Ultimate Full Art/");
-						path += characterList[i].text;
-						path += "/";
-						path += characterList[i].text;
-						if (numImages < 10)
-							path += "_0" + std::to_string(numImages);
-						else if (10 <= numImages)
-							path += "_" + std::to_string(numImages);
-						path += ".png";
-
-
-						//Generates a GLuint for the texture and checks if
-						//the texture is NULL (i.e. an error)
-						GLuint loadedImage = LoadAndInitTex(path.c_str());
-						if (loadedImage != NULL)
-						{
-							textureList.push_back(loadedImage);
-
-							numImages += 1;
-							indexTex += 1;
-							hasImageLoadedYet = true;
-						}
-						//If NULL, then no more character images to load
-						else
-						{
-							moreImages = false;
-							if (hasImageLoadedYet)
-								numImages -= 1;
-							else
-							{
-								std::vector<CharacterName>::iterator charToRemove = characterList.begin() + i;
-
-								characterList.erase(charToRemove);
-								i--;
-							}
-						}
-					}
-					//If num > 99, then no more character images
-					else
-						moreImages = false;
-				}
-
-				//Sets the number of images for this
-				//character slot
-				if (hasImageLoadedYet)
-					characterList[i].numImages = numImages;
-			}
-			initSuccessful = true;
+			initSuccessful = false;
 		}
+		doneWithInit = true;
 	}
-	else
-	{
-		initSuccessful = false;
-	}
-	doneWithInit = true;
 }
 
 void SmashScoreboard::StyleColorsRed(ImGuiStyle* dst)
@@ -336,6 +361,61 @@ void SmashScoreboard::StyleColorsGreen(ImGuiStyle* dst)
 	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
 }
 
+void SmashScoreboard::StyleColorsFileOpenMenu(ImGuiStyle* dst)
+{
+	ImGuiStyle* style = dst ? dst : &ImGui::GetStyle();
+	ImVec4* colors = style->Colors;
+
+	colors[ImGuiCol_Text] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+	colors[ImGuiCol_TextDisabled] = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
+	colors[ImGuiCol_WindowBg] = ImVec4(0.94f, 0.94f, 0.94f, 1.00f);
+	colors[ImGuiCol_ChildBg] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+	colors[ImGuiCol_PopupBg] = ImVec4(1.00f, 1.00f, 1.00f, 0.98f);
+	colors[ImGuiCol_Border] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+	colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+	colors[ImGuiCol_FrameBg] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
+	colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
+	colors[ImGuiCol_TitleBg] = ImVec4(0.96f, 0.96f, 0.96f, 1.00f);
+	colors[ImGuiCol_TitleBgActive] = ImVec4(0.82f, 0.82f, 0.82f, 1.00f);
+	colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.00f, 1.00f, 1.00f, 0.51f);
+	colors[ImGuiCol_MenuBarBg] = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);
+	colors[ImGuiCol_ScrollbarBg] = ImVec4(0.98f, 0.98f, 0.98f, 0.53f);
+	colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.69f, 0.69f, 0.69f, 0.80f);
+	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.49f, 0.49f, 0.49f, 0.80f);
+	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.49f, 0.49f, 0.49f, 1.00f);
+	colors[ImGuiCol_CheckMark] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+	colors[ImGuiCol_SliderGrab] = ImVec4(0.26f, 0.59f, 0.98f, 0.78f);
+	colors[ImGuiCol_SliderGrabActive] = ImVec4(0.46f, 0.54f, 0.80f, 0.60f);
+	colors[ImGuiCol_Button] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
+	colors[ImGuiCol_ButtonHovered] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+	colors[ImGuiCol_ButtonActive] = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
+	colors[ImGuiCol_Header] = ImVec4(0.26f, 0.59f, 0.98f, 0.31f);
+	colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+	colors[ImGuiCol_HeaderActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+	colors[ImGuiCol_Separator] = ImVec4(0.39f, 0.39f, 0.39f, 0.62f);
+	colors[ImGuiCol_SeparatorHovered] = ImVec4(0.14f, 0.44f, 0.80f, 0.78f);
+	colors[ImGuiCol_SeparatorActive] = ImVec4(0.14f, 0.44f, 0.80f, 1.00f);
+	colors[ImGuiCol_ResizeGrip] = ImVec4(0.80f, 0.80f, 0.80f, 0.56f);
+	colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
+	colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
+	colors[ImGuiCol_Tab] = ImLerp(colors[ImGuiCol_Header], colors[ImGuiCol_TitleBgActive], 0.90f);
+	colors[ImGuiCol_TabHovered] = colors[ImGuiCol_HeaderHovered];
+	colors[ImGuiCol_TabActive] = ImLerp(colors[ImGuiCol_HeaderActive], colors[ImGuiCol_TitleBgActive], 0.60f);
+	colors[ImGuiCol_TabUnfocused] = ImLerp(colors[ImGuiCol_Tab], colors[ImGuiCol_TitleBg], 0.80f);
+	colors[ImGuiCol_TabUnfocusedActive] = ImLerp(colors[ImGuiCol_TabActive], colors[ImGuiCol_TitleBg], 0.40f);
+	colors[ImGuiCol_PlotLines] = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
+	colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+	colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+	colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.45f, 0.00f, 1.00f);
+	colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
+	colors[ImGuiCol_DragDropTarget] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
+	colors[ImGuiCol_NavHighlight] = colors[ImGuiCol_HeaderHovered];
+	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.70f, 0.70f, 0.70f, 0.70f);
+	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.20f);
+	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+}
+
 void SmashScoreboard::StyleColorsFromIndex(int index)
 {
 	switch (index)
@@ -422,16 +502,24 @@ bool SmashScoreboard::findLowerSubstring(std::string str1, std::string str2)
 	return findSubstring(w1, w2);
 }
 
-GLuint SmashScoreboard::LoadAndInitTex(const char* path)
+GLuint SmashScoreboard::LoadAndInitTex(const char* path, GLuint customID)
 {
 	SDL_Surface* surf = IMG_Load(path);
 
 	if (surf != NULL)
 	{
 		static int idNum = 999;
-		idNum += 1;
 
-		GLuint id(idNum);
+		GLuint id;
+		if (customID != 0)
+		{
+			idNum += 1;
+			id = customID;
+		}
+		else
+		{
+			id = idNum;
+		}
 
 		glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);

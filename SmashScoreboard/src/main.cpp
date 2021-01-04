@@ -24,12 +24,6 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	//Window width
-	int width = 1280;
-
-	//Window height
-	int height = 720;
-
 	if (IMG_Init(IMG_INIT_PNG) == 0)
 	{
 		std::cout << "Error in IMG_Init(): " << SDL_GetError() << std::endl;
@@ -42,7 +36,7 @@ int main(int argc, char* argv[])
 
 	SDL_Window* window = SDL_CreateWindow("Smash Scoreboard I dunno",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+		SmashScoreboard::windowWidth, SmashScoreboard::windowHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 
 	if (window == NULL)
 	{
@@ -85,14 +79,15 @@ int main(int argc, char* argv[])
 	SDL_Rect destRect;
 	destRect.w = loader_surf->w;
 	destRect.h = loader_surf->h;
-	destRect.x = (width / 2) - (destRect.w / 2);
-	destRect.y = (height / 2) - (destRect.h / 2);
+	destRect.x = (SmashScoreboard::windowWidth / 2) - (destRect.w / 2);
+	destRect.y = (SmashScoreboard::windowHeight / 2) - (destRect.h / 2);
 
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, loader, NULL, &destRect);
 	SDL_RenderPresent(renderer);
 
-	SmashScoreboard::init("res/ImageCache/Smash Ultimate Full Art/_CharList.txt");
+	SmashScoreboard::internalsInit();
+	//SmashScoreboard::init("res/ImageCache/Smash Ultimate Full Art/_CharList.txt");
 
 	//DESTROY RENDERER AND LOADER TEXTURES
 
@@ -121,8 +116,9 @@ int main(int argc, char* argv[])
 	//so that it doesn't crash?
 	//SmashScoreboard::windowList.push_back(nullptr);
 
-	//GAME LOOP
+	//[SECTION] If Initialization Fails
 
+	SmashScoreboard::OpenFileWindow::CreateWindow();
 	if (!SmashScoreboard::initSuccessful)
 	{
 		while (shouldBeRunning)
@@ -137,8 +133,8 @@ int main(int argc, char* argv[])
 				case SDL_WINDOWEVENT:
 					switch (event.window.event) {
 					case SDL_WINDOWEVENT_SIZE_CHANGED:
-						width = event.window.data1;
-						height = event.window.data2;
+						SmashScoreboard::windowWidth = event.window.data1;
+						SmashScoreboard::windowHeight = event.window.data2;
 						break;
 					}
 				}
@@ -146,36 +142,53 @@ int main(int argc, char* argv[])
 				ImGui_ImplSDL2_ProcessEvent(&event);
 			}
 
-
 			ImGui_ImplSDL2_NewFrame(window);
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui::NewFrame();
 
-			ImGui::BeginMainMenuBar();
+			//[IF FILE WINDOW IS OPEN]
 
-			if (ImGui::BeginMenu("File"))
+			if (SmashScoreboard::ISFILEWINDOWOPEN)
 			{
-				if (ImGui::MenuItem("Quit"))
-					shouldBeRunning = false;
-				ImGui::EndMenu();
+				SmashScoreboard::OpenFileWindow* win = SmashScoreboard::OpenFileWindow::getWindowPtr();
+				if (!win->isVisible)
+					win->CloseWindow();
+				else
+					win->perframe();
+#ifndef NDEBUG
+				//ImGui::StyleColorsLight();
+				ImGui::ShowDemoWindow();
+#endif
 			}
+			else
+			{
+				ImGui::BeginMainMenuBar();
 
-			ImGui::EndMainMenuBar();
+				if (ImGui::BeginMenu("File"))
+				{
+					if (ImGui::MenuItem("Quit"))
+						shouldBeRunning = false;
+					ImGui::EndMenu();
+				}
 
-			//ImGui::StyleColorsLight();
-			ImGui::Begin("Failed to initialize");
-			ImGui::Text("Smash Scoreboard failed to initialize...");
-			ImGui::Text("Please make sure that your path to the .txt file is correct!");
+				ImGui::EndMainMenuBar();
+
+				//ImGui::StyleColorsLight();
+				ImGui::Begin("Failed to initialize");
+				ImGui::Text("Smash Scoreboard failed to initialize...");
+				ImGui::Text("Please make sure that your path to the .txt file is correct!");
 
 #ifndef NDEBUG
-			//ImGui::StyleColorsLight();
-			ImGui::ShowDemoWindow();
+				//ImGui::StyleColorsLight();
+				ImGui::ShowDemoWindow();
 #endif
 
-			ImGui::End();
+				ImGui::End();
 
-			auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
-			backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(width, height), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
+				auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
+				backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
+					SmashScoreboard::windowHeight), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
+			}
 
 			ImGui::EndFrame();
 
@@ -254,6 +267,10 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	SmashScoreboard::OpenFileWindow::CreateWindow();
+
+	//[SECTION] Main Loop
+
 	while (shouldBeRunning)
 	{
 		while (SDL_PollEvent(&event))
@@ -266,8 +283,8 @@ int main(int argc, char* argv[])
 			case SDL_WINDOWEVENT:
 				switch (event.window.event) {
 				case SDL_WINDOWEVENT_SIZE_CHANGED:
-					width = event.window.data1;
-					height = event.window.data2;
+					SmashScoreboard::windowWidth = event.window.data1;
+					SmashScoreboard::windowHeight = event.window.data2;
 					break;
 				}
 			}
@@ -281,56 +298,66 @@ int main(int argc, char* argv[])
 		ImGui::NewFrame();
 
 		//Menu Bar
-
-		ImGui::StyleColorsDark();
-
-		ImGui::BeginMainMenuBar();
-
-		if (ImGui::BeginMenu("File"))
+		if (SmashScoreboard::ISFILEWINDOWOPEN)
 		{
-			if (ImGui::MenuItem("Quit"))
-				shouldBeRunning = false;
-			ImGui::EndMenu();
+			SmashScoreboard::OpenFileWindow* win = SmashScoreboard::OpenFileWindow::getWindowPtr();
+			if (!win->isVisible)
+				win->CloseWindow();
+			else
+				win->perframe();
 		}
-		if (ImGui::BeginMenu("Add Window"))
+		else
 		{
-			if (ImGui::MenuItem("Add Character Select Window"))
+			ImGui::StyleColorsDark();
+
+			ImGui::BeginMainMenuBar();
+
+			if (ImGui::BeginMenu("File"))
 			{
-				SmashScoreboard::AddPlayerSelectWindowWindow::CreateWindow();
+				if (ImGui::MenuItem("Quit"))
+					shouldBeRunning = false;
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Add Window"))
+			{
+				if (ImGui::MenuItem("Add Character Select Window"))
+				{
+					SmashScoreboard::AddPlayerSelectWindowWindow::CreateWindow();
+				}
+
+				ImGui::EndMenu();
 			}
 
-			ImGui::EndMenu();
-		}
+			ImGui::EndMainMenuBar();
 
-		ImGui::EndMainMenuBar();
+			//Frame
 
-		//Frame
-		
 #ifndef NDEBUG
-		ImGui::StyleColorsLight();
-		ImGui::ShowDemoWindow();
+			ImGui::StyleColorsLight();
+			ImGui::ShowDemoWindow();
 #endif
-		if (SmashScoreboard::windowList.size() != 0)
-		{
-			for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
+			if (SmashScoreboard::windowList.size() != 0)
 			{
-				if (!SmashScoreboard::windowList[i].get()->isVisible)
+				for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
 				{
-					SmashScoreboard::SmashScoreboardWindow::DeleteWindow(SmashScoreboard::windowList[i].get(), SmashScoreboard::windowList);
-					i--;
-					if (SmashScoreboard::windowList.size() <= 0)
-						goto NoWindows;
-				}
-				else
-				{
-					SmashScoreboard::windowList[i].get()->perframe();
-				}
+					if (!SmashScoreboard::windowList[i].get()->isVisible)
+					{
+						SmashScoreboard::SmashScoreboardWindow::DeleteWindow(SmashScoreboard::windowList[i].get(), SmashScoreboard::windowList);
+						i--;
+						if (SmashScoreboard::windowList.size() <= 0)
+							goto NoWindows;
+					}
+					else
+					{
+						SmashScoreboard::windowList[i].get()->perframe();
+					}
 
+				}
 			}
+			NoWindows: auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
+			backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
+				SmashScoreboard::windowHeight), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
 		}
-		NoWindows: auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
-		backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(width, height), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
-
 		ImGui::EndFrame();
 
 		ImGui::Render();

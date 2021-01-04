@@ -5,6 +5,7 @@ namespace fs = std::filesystem;
 
 //Set the UNIQUE IDENTIFIER before any new windows
 unsigned int SmashScoreboard::UNIQUE_INT_CTR = 0;
+bool SmashScoreboard::ISFILEWINDOWOPEN = false;
 
 std::vector<std::shared_ptr<SmashScoreboard::SmashScoreboardWindow>> SmashScoreboard::windowList;
 
@@ -13,6 +14,119 @@ SmashScoreboard::SmashScoreboardWindow* SmashScoreboard::SmashScoreboardWindow::
 	std::shared_ptr<SmashScoreboardWindow> win = std::make_shared<SmashScoreboardWindow>();
 	windowList.push_back(win);
 	return win.get();
+}
+
+// [SECTION] OpenFileWindow
+
+//CONSTRUCTOR DEFINED IN SMASHSCOREBOARDWIDGETS.H AS IT IS PROTECTED
+
+std::shared_ptr<SmashScoreboard::OpenFileWindow> SmashScoreboard::OpenFileWindow::filewindowptr = nullptr;
+
+SmashScoreboard::OpenFileWindow* SmashScoreboard::OpenFileWindow::CreateWindow()
+{
+	if (filewindowptr == nullptr)
+	{
+		filewindowptr = std::make_shared<OpenFileWindow>();
+	}
+	ISFILEWINDOWOPEN = true;
+
+	return filewindowptr.get();
+}
+
+void SmashScoreboard::OpenFileWindow::CloseWindow()
+{
+	ISFILEWINDOWOPEN = false;	
+}
+
+void SmashScoreboard::OpenFileWindow::perframe()
+{
+	if (this->isVisible)
+	{
+		SmashScoreboard::StyleColorsFileOpenMenu();
+		ImGui::SetNextWindowSize(ImVec2(windowWidth, windowHeight));
+		ImGui::SetNextWindowPos(ImVec2(0, 0));
+		ImGui::Begin(this->windowName.c_str(), &this->isVisible, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus);
+
+		ImGui::Text("Path:"); ImGui::SameLine();
+		ImGui::InputText("##Path", this->folderpathbuf, IM_ARRAYSIZE(this->folderpathbuf));
+		ImGui::SameLine();
+		if (ImGui::ImageButton((ImTextureID)FileSelect_GoImage, ImVec2(32, 32)))
+		{
+			try
+			{
+				std::string _testpath = std::string(folderpathbuf);
+				//fs::path _path = _testpath;
+				for (const auto& entry : fs::directory_iterator(_testpath))
+				{}
+
+				readableFolderPath = folderpathbuf;
+			}
+			catch (fs::filesystem_error e)
+			{
+				std::cout << "Help" << std::endl;
+			}
+		}
+
+		ImGui::SameLine();
+		ImGui::ImageButton((ImTextureID)FileSelect_UpOneLevelImage, ImVec2(32, 32));
+
+		ImGui::BeginChild((ImGuiID)1, ImVec2(0, windowHeight - 120), true);
+		std::string path = this->readableFolderPath;
+		int i = 0;
+		for (const auto& entry : fs::directory_iterator(path))
+		{
+			std::string name = std::string(entry.path().string());
+
+			if (entry.is_directory())
+			{
+				if (path.back() == '\\')
+				{
+					name.replace(name.find(path), std::string(path).length(), "");
+					name = "\\" + name;
+				}
+				else
+				{
+					name.replace(name.find(path), std::string(path).length(), "");
+				}
+				
+
+				ImGui::Image((void*)(intptr_t)FileSelect_Folder, ImVec2(16, 16)); ImGui::SameLine();
+
+				if (ImGui::TreeNodeEx((void*)(intptr_t)i, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, name.c_str()))
+				{
+				}
+			}
+			else
+			{
+				if (path.back() == '\\')
+				{
+					name.replace(name.find(path), std::string(path).length(), "");
+				}
+				else
+				{
+					name.replace(name.find(path + "\\"), std::string(path + "\\").length(), "");
+				}
+				
+				ImGui::Image((void*)(intptr_t)FileSelect_File, ImVec2(16, 16)); ImGui::SameLine();
+
+				if (ImGui::TreeNodeEx((void*)(intptr_t)i, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, name.c_str()))
+				{
+				}
+			}
+
+			i++;
+		}
+		ImGui::EndChild();
+
+		ImGui::Text("Filename:"); ImGui::SameLine();
+		ImGui::InputText("##Filename", this->filenamebuf, IM_ARRAYSIZE(this->filenamebuf));
+		ImGui::SameLine();
+		ImGui::Button("Cancel");
+		ImGui::SameLine();
+		ImGui::Button("Open File");
+
+		ImGui::End();
+	}
 }
 
 // [SECTION] PlayerOneSelectWindow()
@@ -150,6 +264,8 @@ void SmashScoreboard::AddPlayerSelectWindowWindow::perframe()
 		ImGui::End();
 	}
 }
+
+// [SECTION] Other Functions
 
 bool SmashScoreboard::checkForTakenIdentifier(std::string ident)
 {
