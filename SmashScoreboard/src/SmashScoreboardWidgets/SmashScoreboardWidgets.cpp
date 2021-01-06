@@ -286,9 +286,16 @@ void SmashScoreboard::OpenFileWindow::perframe()
 		ImGui::SameLine();
 		if (ImGui::Button("Open File"))
 		{
+			std::string openpath = this->readableFolderPath;
+			if (readableFolderPath.back() != '\\')
+			{
+				openpath += '\\';
+			}
+			openpath += this->readableFileName;
+
 			if (this->currentCallback == this->LOADSSSBWINDOWCONFIG)
 			{
-				if (this->LoadSSSBWindowConfig(this->readableFileName))
+				if (this->LoadSSSBWindowConfig(openpath))
 				{
 					this->isVisible = false;
 				}
