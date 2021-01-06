@@ -18,6 +18,8 @@ namespace SmashScoreboard
 	//or just the file select window
 	extern bool ISFILEWINDOWOPEN;
 
+	void LoadFromSSSB(const char* filename);
+
 	struct SmashScoreboardWindow
 	{
 		std::string windowName;
@@ -66,6 +68,21 @@ namespace SmashScoreboard
 
 		std::string readableFolderPath;
 		std::string readableFileName;
+
+		//start defining callbacks for "OnOpen" button.
+		//Template is returns bool, true if successful,
+		//false if not.
+		//Must take a string value as a parameter.
+
+		//Firstly, here's the variable that stores the
+		//currently used callback.
+		static int currentCallback;
+
+		//Now for the callback functions themselves.
+
+		//This function loads a .sssb file and changes
+		//the windowList to suit it
+		bool LoadSSSBWindowConfig(std::string inFile);
 	
 	public:
 		OpenFileWindow()
@@ -84,6 +101,13 @@ namespace SmashScoreboard
 
 		bool isVisible = true;
 		void perframe() override;
+
+		//enum values for setting open window callback
+		enum {LOADSSSBWINDOWCONFIG = 100};
+
+		//and a function to change that value when the
+		//user loads the file select window
+		static void SetCallback(int callbackFlag = 0);
 
 		static OpenFileWindow* getWindowPtr() { return filewindowptr.get(); }
 	};

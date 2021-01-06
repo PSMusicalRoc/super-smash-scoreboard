@@ -211,7 +211,7 @@ void SmashScoreboard::StyleColorsBlue(ImGuiStyle* dst)
 	colors[ImGuiCol_FrameBg] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
 	colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
-	colors[ImGuiCol_TitleBg] = ImVec4(0.28f, 0.69f, 1.00f, 1.00f);
+	colors[ImGuiCol_TitleBg] = ImVec4(0.28f, 0.69f, 1.00f, .60f);
 	colors[ImGuiCol_TitleBgActive] = ImVec4(0.26f, 0.57f, 1.00f, 1.00f);
 	colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.22f, 0.33f, 1.00f, 0.51f);
 	colors[ImGuiCol_MenuBarBg] = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);
@@ -266,7 +266,7 @@ void SmashScoreboard::StyleColorsYellow(ImGuiStyle* dst)
 	colors[ImGuiCol_FrameBg] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
 	colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
-	colors[ImGuiCol_TitleBg] = ImVec4(0.71f, 0.71f, 0.00f, 1.00f);
+	colors[ImGuiCol_TitleBg] = ImVec4(0.71f, 0.71f, 0.00f, .60f);
 	colors[ImGuiCol_TitleBgActive] = ImVec4(0.86f, 0.86f, 0.00f, 1.00f);
 	colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.00f, 1.00f, 0.00f, 0.51f);
 	colors[ImGuiCol_MenuBarBg] = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);
@@ -321,7 +321,7 @@ void SmashScoreboard::StyleColorsGreen(ImGuiStyle* dst)
 	colors[ImGuiCol_FrameBg] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
 	colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
-	colors[ImGuiCol_TitleBg] = ImVec4(0.00f, 0.86f, 0.00f, 1.00f);
+	colors[ImGuiCol_TitleBg] = ImVec4(0.00f, 0.86f, 0.00f, .40f);
 	colors[ImGuiCol_TitleBgActive] = ImVec4(0.00f, 0.71f, 0.00f, 1.00f);
 	colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 1.00f, 0.00f, 0.51f);
 	colors[ImGuiCol_MenuBarBg] = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);

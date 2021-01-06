@@ -9,6 +9,77 @@ bool SmashScoreboard::ISFILEWINDOWOPEN = false;
 
 std::vector<std::shared_ptr<SmashScoreboard::SmashScoreboardWindow>> SmashScoreboard::windowList;
 
+// LoadFromSSSB()
+
+void SmashScoreboard::LoadFromSSSB(const char* filename)
+{
+	std::fstream defaultLayout;
+	defaultLayout.open(filename, std::ios::in);
+	if (defaultLayout.is_open())
+	{
+		//defines whether or not to search for start
+		//or to search for attributes
+		bool isWindowStarted = false;
+
+		enum { CHARACTERWINDOW = 1 };
+
+		int windowType;
+		int styleIndex = 1;
+		std::string windowName = "default";
+
+		//start reading lines
+		std::string line;
+		while (std::getline(defaultLayout, line))
+		{
+			if (!isWindowStarted)
+			{
+				if (line.find("start") == 0 && line.find("start") != line.npos)
+				{
+					std::string windowTypeString = line.replace(line.find("start "), std::string("start ").length(), "");
+					if (windowTypeString == "CharacterWindow")
+					{
+						windowType = CHARACTERWINDOW;
+						isWindowStarted = true;
+					}
+				}
+			}
+			else
+			{
+				if (line.find("end") == 0 && line.find("end") != line.npos)
+				{
+					if (!SmashScoreboard::checkForTakenIdentifier(windowName))
+					{
+						switch (windowType)
+						{
+						case CHARACTERWINDOW:
+							SmashScoreboard::PlayerOneSelectWindow::CreateWindow(windowName, styleIndex);
+							break;
+						}
+					}
+					isWindowStarted = false;
+				}
+				else if (line.find("styleIndex") == 0 && line.find("styleIndex") != line.npos)
+				{
+					std::string datastring = line.replace(line.find("styleIndex "), std::string("styleIndex ").length(), "");
+					int data = std::stoi(datastring);
+					if (0 < data < 5)
+						styleIndex = data;
+					else
+						styleIndex = 1;
+				}
+				else if (line.find("windowName") == 0 && line.find("windowName") != line.npos)
+				{
+					std::string datastring = line.replace(line.find("windowName "), std::string("windowName ").length(), "");
+					if (!SmashScoreboard::checkForTakenIdentifier(datastring))
+						windowName = datastring;
+				}
+			}
+		}
+	}
+}
+
+// [SECTION] SmashScoreboardWindow()
+
 SmashScoreboard::SmashScoreboardWindow* SmashScoreboard::SmashScoreboardWindow::CreateWindow()
 {
 	std::shared_ptr<SmashScoreboardWindow> win = std::make_shared<SmashScoreboardWindow>();
@@ -21,6 +92,7 @@ SmashScoreboard::SmashScoreboardWindow* SmashScoreboard::SmashScoreboardWindow::
 //CONSTRUCTOR DEFINED IN SMASHSCOREBOARDWIDGETS.H AS IT IS PROTECTED
 
 std::shared_ptr<SmashScoreboard::OpenFileWindow> SmashScoreboard::OpenFileWindow::filewindowptr = nullptr;
+int SmashScoreboard::OpenFileWindow::currentCallback = 0;
 
 SmashScoreboard::OpenFileWindow* SmashScoreboard::OpenFileWindow::CreateWindow()
 {
@@ -38,6 +110,8 @@ void SmashScoreboard::OpenFileWindow::CloseWindow()
 	ISFILEWINDOWOPEN = false;	
 }
 
+void SmashScoreboard::OpenFileWindow::SetCallback(int callbackFlag) { currentCallback = callbackFlag; }
+
 void SmashScoreboard::OpenFileWindow::perframe()
 {
 	if (this->isVisible)
@@ -48,27 +122,87 @@ void SmashScoreboard::OpenFileWindow::perframe()
 		ImGui::Begin(this->windowName.c_str(), &this->isVisible, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
 		ImGui::Text("Path:"); ImGui::SameLine();
-		ImGui::InputText("##Path", this->folderpathbuf, IM_ARRAYSIZE(this->folderpathbuf));
+		if (ImGui::InputText("##Path", this->folderpathbuf, IM_ARRAYSIZE(this->folderpathbuf), ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			try
+			{
+				std::string _testpath = std::string(this->folderpathbuf);
+				auto __search = _testpath.find('\\');
+				if (__search == _testpath.npos)
+					_testpath += '\\';
+				
+				for (const auto& entry : fs::directory_iterator(_testpath))
+				{
+				}
+
+				this->readableFolderPath = _testpath;
+				strcpy_s(this->folderpathbuf, _testpath.c_str());
+			}
+			catch (fs::filesystem_error e)
+			{
+				strcpy_s(this->folderpathbuf, this->readableFolderPath.c_str());
+			}
+		}
 		ImGui::SameLine();
 		if (ImGui::ImageButton((ImTextureID)FileSelect_GoImage, ImVec2(32, 32)))
 		{
 			try
 			{
-				std::string _testpath = std::string(folderpathbuf);
-				//fs::path _path = _testpath;
-				for (const auto& entry : fs::directory_iterator(_testpath))
-				{}
+				std::string _testpath = std::string(this->folderpathbuf);
+				auto __search = _testpath.find('\\');
+				if (__search == _testpath.npos)
+					_testpath += '\\';
 
-				readableFolderPath = folderpathbuf;
+				for (const auto& entry : fs::directory_iterator(_testpath))
+				{
+				}
+
+				this->readableFolderPath = _testpath;
+				strcpy_s(this->folderpathbuf, _testpath.c_str());
 			}
 			catch (fs::filesystem_error e)
 			{
-				std::cout << "Help" << std::endl;
+				strcpy_s(this->folderpathbuf, this->readableFolderPath.c_str());
 			}
 		}
 
 		ImGui::SameLine();
-		ImGui::ImageButton((ImTextureID)FileSelect_UpOneLevelImage, ImVec2(32, 32));
+		if (ImGui::ImageButton((ImTextureID)FileSelect_UpOneLevelImage, ImVec2(32, 32)))
+		{
+			if (this->readableFolderPath.back() == '\\')
+			{
+				//2 because it creates first the length starting at 0 for
+				//a minus 1, then takes another one away so we don't consider
+				//the first backslash
+				auto backpos = this->readableFolderPath.length() - 2;
+				auto __search = this->readableFolderPath.rfind('\\', backpos);
+
+				if (__search != this->readableFolderPath.npos)
+				{
+					size_t len = this->readableFolderPath.length() - __search;
+					len -= 1;
+					this->readableFolderPath.replace(__search, len, "");
+				}
+			}
+			else
+			{
+				auto __search = this->readableFolderPath.rfind('\\');
+				if (__search != this->readableFolderPath.npos)
+				{
+					size_t len = this->readableFolderPath.length() - __search;
+					this->readableFolderPath.replace(__search, len, "");
+
+					auto __newsearch = this->readableFolderPath.find('\\');
+					if (__newsearch == this->readableFolderPath.npos)
+					{
+						this->readableFolderPath += '\\';
+					}
+				}
+					
+			}
+
+			strcpy_s(this->folderpathbuf, this->readableFolderPath.c_str());
+		}
 
 		ImGui::BeginChild((ImGuiID)1, ImVec2(0, windowHeight - 120), true);
 		std::string path = this->readableFolderPath;
@@ -76,7 +210,6 @@ void SmashScoreboard::OpenFileWindow::perframe()
 		for (const auto& entry : fs::directory_iterator(path))
 		{
 			std::string name = std::string(entry.path().string());
-
 			if (entry.is_directory())
 			{
 				if (path.back() == '\\')
@@ -92,8 +225,30 @@ void SmashScoreboard::OpenFileWindow::perframe()
 
 				ImGui::Image((void*)(intptr_t)FileSelect_Folder, ImVec2(16, 16)); ImGui::SameLine();
 
-				if (ImGui::TreeNodeEx((void*)(intptr_t)i, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, name.c_str()))
+				ImGui::TreeNodeEx((void*)(intptr_t)i, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, name.c_str());
+				if (ImGui::IsItemClicked())
 				{
+					if (ImGui::IsMouseDoubleClicked(0))
+					{
+						if (path.back() == '\\')
+						{
+							std::string _tempname = name;
+							_tempname.replace(name.find('\\'), 1, "");
+							this->readableFolderPath = this->readableFolderPath + _tempname;
+							strcpy_s(this->folderpathbuf, this->readableFolderPath.c_str());
+						}
+						else
+						{
+							this->readableFolderPath = this->readableFolderPath + name;
+							strcpy_s(this->folderpathbuf, this->readableFolderPath.c_str());
+						}
+					}
+					else
+					{
+						this->readableFileName = name;
+						strcpy_s(this->filenamebuf, this->readableFileName.c_str());
+
+					}
 				}
 			}
 			else
@@ -109,8 +264,11 @@ void SmashScoreboard::OpenFileWindow::perframe()
 				
 				ImGui::Image((void*)(intptr_t)FileSelect_File, ImVec2(16, 16)); ImGui::SameLine();
 
-				if (ImGui::TreeNodeEx((void*)(intptr_t)i, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, name.c_str()))
+				ImGui::TreeNodeEx((void*)(intptr_t)i, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, name.c_str());
+				if (ImGui::IsItemClicked())
 				{
+					this->readableFileName = name;
+					strcpy_s(this->filenamebuf, this->readableFileName.c_str());
 				}
 			}
 
@@ -121,12 +279,36 @@ void SmashScoreboard::OpenFileWindow::perframe()
 		ImGui::Text("Filename:"); ImGui::SameLine();
 		ImGui::InputText("##Filename", this->filenamebuf, IM_ARRAYSIZE(this->filenamebuf));
 		ImGui::SameLine();
-		ImGui::Button("Cancel");
+		if (ImGui::Button("Cancel"))
+		{
+			this->isVisible = false;
+		}
 		ImGui::SameLine();
-		ImGui::Button("Open File");
+		if (ImGui::Button("Open File"))
+		{
+			if (this->currentCallback == this->LOADSSSBWINDOWCONFIG)
+			{
+				if (this->LoadSSSBWindowConfig(this->readableFileName))
+				{
+					this->isVisible = false;
+				}
+			}
+		}
 
 		ImGui::End();
 	}
+}
+
+//CALLBACKS
+
+bool SmashScoreboard::OpenFileWindow::LoadSSSBWindowConfig(std::string filepath)
+{
+	if (filepath.rfind(".sssb") != filepath.length() - 5)
+	{
+		return false;
+	}
+	LoadFromSSSB(filepath.c_str());
+	return true;
 }
 
 // [SECTION] PlayerOneSelectWindow()
