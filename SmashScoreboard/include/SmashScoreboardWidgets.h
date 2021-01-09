@@ -6,8 +6,13 @@
 #include <iostream>
 
 //for current working directory stuff
+#ifdef __linux__
+#include <unistd.h>
+#define GetCurrentDir getcwd
+#elif _WIN32
 #include <direct.h>
 #define GetCurrentDir _getcwd
+#endif
 
 namespace SmashScoreboard
 {

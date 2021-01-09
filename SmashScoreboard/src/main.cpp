@@ -1,7 +1,14 @@
 #include <string>
 #include <algorithm>
-#include <SDL.h>
-#include <SDL_image.h>
+#ifdef __linux__ 
+    #include <SDL2/SDL.h>
+	#include <SDL2/SDL_image.h>
+#elif _WIN32
+    #include <SDL.h>
+	#include <SDL_image.h>
+#else
+#endif
+
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl3.h>
 #include <glad/glad.h>
