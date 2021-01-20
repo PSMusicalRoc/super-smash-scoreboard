@@ -1,6 +1,10 @@
 #pragma once
+#include <imgui.h>
+#include <imgui_internal.h>
 #include <imgui_impl_sdl.h>
+#include <glad/glad.h>
 #include <vector>
+#include <map>
 #include <string>
 #include <algorithm>
 #include <fstream>
@@ -8,29 +12,50 @@
 
 namespace SmashScoreboard
 {
-	bool init(const char* pathToList);
+	extern bool doneWithInit;
+	extern bool initSuccessful;
 
-	class CharacterName
+	extern int windowWidth;
+	extern int windowHeight;
+
+	extern GLuint FileSelect_GoImage;
+	extern GLuint FileSelect_UpOneLevelImage;
+	extern GLuint FileSelect_Folder;
+	extern GLuint FileSelect_File;
+
+	void internalsInit();
+	void init(const char* pathToList);
+
+	struct CharacterName
 	{
-	private:
 		std::string text;
-	public:
+		int indexLow, numImages;
 		CharacterName(std::string str);
 		~CharacterName();
-		const char* getText();
 	};
 
 	//Define variables that will help out other widgets
 
 	//set in init()
 	extern std::vector<CharacterName> characterList;
+	extern std::vector<GLuint> textureList;
 
 	//END VARIABLE DEF
+
+	void StyleColorsRed(ImGuiStyle* dst = (ImGuiStyle*)0);
+	void StyleColorsBlue(ImGuiStyle* dst = (ImGuiStyle*)0);
+	void StyleColorsYellow(ImGuiStyle* dst = (ImGuiStyle*)0);
+	void StyleColorsGreen(ImGuiStyle* dst = (ImGuiStyle*)0);
+	void StyleColorsFileOpenMenu(ImGuiStyle* dst = (ImGuiStyle*)0);
+
+	void StyleColorsFromIndex(int index);
 
 	void HelpMarker(const char* desc);
 
 	bool findSubstring(const char* w1, const char* w2);
 	bool findLowerSubstring(std::string str1, std::string str2);
+
+	GLuint LoadAndInitTex(const char* path, GLuint customID = 0);
 
 	void uninit();
 }
