@@ -21,7 +21,8 @@ void SmashScoreboard::LoadFromSSSB(const char* filename)
 		//or to search for attributes
 		bool isWindowStarted = false;
 
-		enum { CHARACTERWINDOW = 1 };
+		enum {	CHARACTERWINDOW = 1,
+				NAMEWINDOW		= 2};
 
 		int windowType;
 		int styleIndex = 1;
@@ -41,6 +42,11 @@ void SmashScoreboard::LoadFromSSSB(const char* filename)
 						windowType = CHARACTERWINDOW;
 						isWindowStarted = true;
 					}
+					else if (windowTypeString == "NameWindow")
+					{
+						windowType = NAMEWINDOW;
+						isWindowStarted = true;
+					}
 				}
 			}
 			else
@@ -54,7 +60,12 @@ void SmashScoreboard::LoadFromSSSB(const char* filename)
 						case CHARACTERWINDOW:
 							SmashScoreboard::PlayerOneSelectWindow::CreateWindow(windowName, styleIndex);
 							break;
+						case NAMEWINDOW:
+							SmashScoreboard::PlayerTextWindow::CreateWindow(windowName, styleIndex);
+							break;
 						}
+
+						windowName = "default";
 					}
 					isWindowStarted = false;
 				}
@@ -410,7 +421,7 @@ void SmashScoreboard::AddPlayerSelectWindowWindow::perframe()
 
 		ImGui::Begin(("Add a new Character Selector Window" + this->windowTitleIdentifier).c_str(), &this->isVisible, ImGuiWindowFlags_AlwaysAutoResize);
 		const char* items[] = { "Red", "Blue", "Yellow", "Green"};
-		int item_current_idx = 0;                    // Here our selection data is an index.
+		int item_current_idx = this->styleIndex - 1;            // Here our selection data is an index.
 		const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
 		if (ImGui::BeginCombo("New Window Color", combo_label))
 		{
@@ -436,7 +447,7 @@ void SmashScoreboard::AddPlayerSelectWindowWindow::perframe()
 			this->isVisible = false;
 		ImGui::SameLine();
 
-		bool shouldDisable = checkForTakenIdentifier(std::string(this->newWindowName));
+		bool shouldDisable = checkForTakenIdentifier(std::string(this->newWindowName)) || strcmp(this->newWindowName, "");
 
 		if (!shouldDisable)
 		{
@@ -448,7 +459,157 @@ void SmashScoreboard::AddPlayerSelectWindowWindow::perframe()
 		}
 		else
 		{
-			SmashScoreboard::HelpMarker("Choose a name not already taken by another window and not 'default'");
+			SmashScoreboard::HelpMarker("Choose a name not already taken by another window, not blank, and not 'default'");
+		}
+		ImGui::End();
+	}
+}
+
+// [SECTION] PlayerTextWindow()
+
+SmashScoreboard::PlayerTextWindow::PlayerTextWindow(std::string winName, int styleIndex)
+	:SmashScoreboardWindow(winName), pName(""), styleIndex(styleIndex)
+{
+	if (this->windowName == "" or this->windowName == "default")
+		this->windowName == "Player Name Window";
+
+	std::fstream outputFile;
+	outputFile.open(("Output/" + this->windowName + ".txt"), std::ios::in);
+	if (outputFile.is_open())
+	{
+		outputFile.getline(this->comparison, IM_ARRAYSIZE(this->comparison));
+		outputFile.close();
+	}
+}
+
+SmashScoreboard::PlayerTextWindow* SmashScoreboard::PlayerTextWindow::CreateWindow(std::string winName, int styleIndex)
+{
+	std::shared_ptr<SmashScoreboardWindow> win = std::make_shared<PlayerTextWindow>(winName, styleIndex);
+	windowList.push_back(win);
+	return (PlayerTextWindow*)win.get();
+}
+
+void SmashScoreboard::PlayerTextWindow::perframe()
+{
+	if (this->isVisible)
+	{
+		std::fstream outputFile;
+		outputFile.open(("Output/" + this->windowName + ".txt"), std::ios::in);
+		if (outputFile.is_open())
+		{
+			outputFile.getline(this->comparison, IM_ARRAYSIZE(this->comparison));
+			outputFile.close();
+		}
+
+		ImGui::SetNextWindowSize(ImVec2(400, 100), ImGuiCond_FirstUseEver);
+
+		SmashScoreboard::StyleColorsFromIndex(this->styleIndex);
+		ImGui::Begin((this->windowName + "###" + this->windowName).c_str(), &this->isVisible);
+
+		ImGui::Text("Player's Name");
+		ImGui::SameLine();
+		SmashScoreboard::HelpMarker("Input the name of the player currently competing (ex. 'Hungrybox')");
+		ImGui::SameLine();
+		if (ImGui::InputText("##nametext", this->pName, IM_ARRAYSIZE(this->pName), ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			goto SetFileContents;
+		}
+
+		if (strcmp(this->comparison, this->pName) == 0)
+		{
+			ImGui::Text("Name Updated!");
+			ImGui::SameLine();
+			SmashScoreboard::HelpMarker("To update the name again, change the text box to something other than what's currently in the .txt file (or what you last typed)");
+		}
+		else
+		{
+			if (ImGui::Button("Set Name"))
+			{
+			SetFileContents: std::fstream outputFile;
+				outputFile.open(("Output/" + this->windowName + ".txt"), std::ios::in);
+				if (outputFile.is_open())
+				{
+					outputFile.close();
+					outputFile.open("Output/" + this->windowName + ".txt", std::ios::out | std::ios::trunc);
+					outputFile << this->pName;
+					outputFile.close();
+				}
+				else
+				{
+					outputFile.open("Output/" + this->windowName + ".txt", std::ios::out);
+					outputFile << this->pName;
+					outputFile.close();
+				}
+			}
+			ImGui::SameLine();
+			SmashScoreboard::HelpMarker("Click this button when you want to update the file containing the player's name.");
+		}
+
+		ImGui::End();
+	}
+}
+
+// [SECTION] AddPlayerTextWindow()
+
+SmashScoreboard::AddPlayerTextWindow::AddPlayerTextWindow()
+	:SmashScoreboardWindow("Create New Player Name Window"), newWindowName("") {}
+
+SmashScoreboard::AddPlayerTextWindow* SmashScoreboard::AddPlayerTextWindow::CreateWindow()
+{
+	std::shared_ptr<SmashScoreboardWindow> win = std::make_shared<AddPlayerTextWindow>();
+	windowList.push_back(win);
+	return (AddPlayerTextWindow*)win.get();
+}
+
+void SmashScoreboard::AddPlayerTextWindow::perframe()
+{
+	if (this->isVisible)
+	{
+		StyleColorsFromIndex(this->styleIndex);
+
+		ImGui::Begin(("Add a new Character Selector Window" + this->windowTitleIdentifier).c_str(), &this->isVisible, ImGuiWindowFlags_AlwaysAutoResize);
+		const char* items[] = { "Red", "Blue", "Yellow", "Green" };
+		int item_current_idx = this->styleIndex - 1;                    // Here our selection data is an index.
+		const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
+		if (ImGui::BeginCombo("New Window Color", combo_label))
+		{
+			for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+			{
+				const bool is_selected = (item_current_idx == n);
+				if (ImGui::Selectable(items[n], is_selected))
+				{
+					item_current_idx = n;
+					this->styleIndex = n + 1;
+				}
+
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+
+		ImGui::InputText("Name of new Window", newWindowName, IM_ARRAYSIZE(newWindowName));
+		ImGui::SameLine();
+		SmashScoreboard::HelpMarker("This will become not only the name of the new window, but also the name of the .txt file created in the Output folder.");
+
+		if (ImGui::Button("Cancel"))
+			this->isVisible = false;
+		ImGui::SameLine();
+
+		bool shouldDisable = checkForTakenIdentifier(std::string(this->newWindowName)) || strcmp(this->newWindowName, "") == 0;
+
+		if (!shouldDisable)
+		{
+			if (ImGui::Button("Create Window!"))
+			{
+				PlayerTextWindow::CreateWindow(std::string(this->newWindowName), this->styleIndex);
+				this->isVisible = false;
+			}
+		}
+		else
+		{
+			SmashScoreboard::HelpMarker("Choose a name not already taken by another window, not blank, and not 'default'");
 		}
 		ImGui::End();
 	}

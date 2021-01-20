@@ -256,10 +256,15 @@ int main(int argc, char* argv[])
 
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Load Window Config"))
+				if (ImGui::BeginMenu("Layout"))
 				{
-					SmashScoreboard::OpenFileWindow::CreateWindow();
-					SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(SmashScoreboard::OpenFileWindow::LOADSSSBWINDOWCONFIG);
+					if (ImGui::MenuItem("Load Window Config"))
+					{
+						SmashScoreboard::OpenFileWindow::CreateWindow();
+						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(SmashScoreboard::OpenFileWindow::LOADSSSBWINDOWCONFIG);
+					}
+					if (ImGui::MenuItem("Save Window Config")) {}
+					ImGui::EndMenu();
 				}
 				if (ImGui::MenuItem("Quit"))
 					shouldBeRunning = false;
@@ -269,7 +274,14 @@ int main(int argc, char* argv[])
 			{
 				if (ImGui::MenuItem("Add Character Select Window"))
 				{
-					SmashScoreboard::AddPlayerSelectWindowWindow::CreateWindow();
+					if (!SmashScoreboard::checkForTakenIdentifier("Create New Character Select Window"))
+						SmashScoreboard::AddPlayerSelectWindowWindow::CreateWindow();
+				}
+				if (ImGui::MenuItem("Add Player Name Window"))
+				{
+					if (!SmashScoreboard::checkForTakenIdentifier("Create New Player Name Window"))
+						SmashScoreboard::AddPlayerTextWindow::CreateWindow();
+						//SmashScoreboard::PlayerTextWindow::CreateWindow("Test Player", 1);
 				}
 
 				ImGui::EndMenu();

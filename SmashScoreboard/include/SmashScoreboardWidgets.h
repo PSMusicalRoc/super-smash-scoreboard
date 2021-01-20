@@ -156,6 +156,46 @@ namespace SmashScoreboard
 		void perframe() override;
 	};
 
+	class PlayerTextWindow : public SmashScoreboardWindow
+	{
+	private:
+		//Stores the input box data
+		char pName[128];
+		char comparison[128];
+
+		int styleIndex;
+
+	public:
+
+		PlayerTextWindow(std::string winName = "", int styleIndex = 1);
+		~PlayerTextWindow() {}
+		static PlayerTextWindow* CreateWindow(std::string winName = "", int styleIndex = 1);
+
+		void perframe() override;
+	};
+
+	class AddPlayerTextWindow : public SmashScoreboardWindow
+	{
+	private:
+		/// <summary>
+		/// Red = 1
+		/// Blue = 2
+		/// Yellow = 3
+		/// Green = 4
+		/// </summary>
+		int styleIndex = 1;
+
+		//Name of the new Window
+		char newWindowName[128];
+
+	public:
+		AddPlayerTextWindow();
+		~AddPlayerTextWindow() {}
+		static AddPlayerTextWindow* CreateWindow();
+
+		void perframe() override;
+	};
+
 	extern std::vector<std::shared_ptr<SmashScoreboardWindow>> windowList;
 
 	bool checkForTakenIdentifier(std::string ident);
