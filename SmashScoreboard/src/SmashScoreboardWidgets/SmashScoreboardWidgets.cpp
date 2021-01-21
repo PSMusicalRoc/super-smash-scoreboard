@@ -363,6 +363,8 @@ void SmashScoreboard::PlayerOneSelectWindow::perframe()
 		ImGui::InputTextWithHint("", "Player 1's character", pName, IM_ARRAYSIZE(pName)); ImGui::SameLine();
 		SmashScoreboard::HelpMarker("Input the name of Player 1's character (eg. Mario)");
 
+		int WidthTakenUp = 0;
+
 		for (int i = 0; i < SmashScoreboard::characterList.size(); i++)
 		{
 			CharacterName& cname = SmashScoreboard::characterList[i];
@@ -393,6 +395,18 @@ void SmashScoreboard::PlayerOneSelectWindow::perframe()
 							std::cout << fs::copy_file(from, to, copyOptions) << std::endl;
 							std::cout << SmashScoreboard::characterList[i].text.c_str() << std::endl;
 						}
+						WidthTakenUp += ImGui::GetItemRectSize().x;
+
+						ImVec2 contentSize = ImGui::GetContentRegionAvail();
+						if (j + 1 != cname.indexLow + cname.numImages && !(WidthTakenUp + ImGui::GetItemRectSize().x >= contentSize.x))
+						{
+							ImGui::SameLine();
+						}
+						else
+						{
+							WidthTakenUp = 0;
+						}
+						
 					}
 				}
 			}
