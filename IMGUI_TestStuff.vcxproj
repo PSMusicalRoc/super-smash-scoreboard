@@ -168,6 +168,8 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".gitattributes" />
+    <None Include=".gitignore" />
     <None Include="default.sssb" />
     <None Include="imgui.ini" />
     <None Include="README.md" />

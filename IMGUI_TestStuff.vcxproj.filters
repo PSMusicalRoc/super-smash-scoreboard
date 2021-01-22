@@ -67,6 +67,8 @@
     <None Include="imgui.ini" />
     <None Include="default.sssb" />
     <None Include="README.md" />
+    <None Include=".gitattributes" />
+    <None Include=".gitignore" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="res\font\ARLRDBD.TTF" />
