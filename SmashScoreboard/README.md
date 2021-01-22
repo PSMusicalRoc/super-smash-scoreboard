@@ -20,9 +20,17 @@ Super Smash Scoreboard is a C++ program using the <a>Dear ImGui library</a> with
 
 Currently the featureset looks something like this:
 
-- okay then
-- something else
-- one more thing
+- Two different kinds of windows!
+- Easy to use interface!
+- Four different color schemes for windows to make them stand out more!
+- Loadable and Savable window configurations!
+- Customizable background image!
+
+In the future, I want to also implement:
+
+- More Windows!
+- Cross-platform! (if possible)
+- Customizable image sets (so it doesn't just have to be images for Smash!)
 
 ## Installation
 
@@ -34,5 +42,18 @@ Currently the featureset looks something like this:
 
 It really is that simple. The executable is called "SmashScoreboard.exe" and should load the program when opened, provided that you have OpenGL 4.6 or later (as of right now, 4.6 is the latest version.)
 
-## Using Smash Scoreboard
+## Basics of Smash Scoreboard
 
+Smash Scoreboard takes advantage of the Dear ImGui windowing system to allow the user to create windows that accomplish certain tasks. Firstly, let's describe where the basic functionality of the program lies:
+
+1. The `File` menu:
+    - This menu currently holds a `Quit` command as well as layout saving and loading options. These layout configs are store within `.sssb` files, which can be created **(not implemented yet)** or loaded by the program itself.
+
+![](readmeImages/FileMenu.png)
+
+2. The `Add Window` menu:
+    - This menu holds the controls for creating the windows that help make the overlay changes. As of right now, these windows can change `.txt` files and `.png` files.
+
+![](readmeImages/AddWindow.png)
+
+//Start describing the windows somewhere around here

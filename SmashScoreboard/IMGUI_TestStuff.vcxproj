@@ -171,7 +171,6 @@
     <None Include="default.sssb" />
     <None Include="imgui.ini" />
     <None Include="README.md" />
-    <None Include="_new.sssb" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="res\font\ARLRDBD.TTF" />
