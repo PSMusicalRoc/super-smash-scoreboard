@@ -22,6 +22,7 @@ namespace SmashScoreboard
 	//Boolean that defines whether or not to show all the windows
 	//or just the file select window
 	extern bool ISFILEWINDOWOPEN;
+	extern bool ISDIALOGOPEN;
 
 	void LoadFromSSSB(const char* filename);
 
@@ -62,6 +63,24 @@ namespace SmashScoreboard
 
 		bool isVisible = true;
 		virtual void perframe() {};
+		virtual std::string exportToSSSB() { return ""; };
+	};
+
+	class DialogWindow : public SmashScoreboardWindow
+	{
+	private:
+		std::string dialogTitle;
+		std::string dialogContents;
+		GLuint iconImg = 0;
+
+	public:
+		DialogWindow(std::string dialogTitle, std::string dialogContents, GLuint iconImg = 0);
+		~DialogWindow() { ISDIALOGOPEN = false; }
+
+		static DialogWindow* CreateWindow(std::string dialogTitle, std::string dialogContents, GLuint iconImg = 0);
+
+		void perframe() override;
+
 	};
 
 	class OpenFileWindow : public SmashScoreboardWindow
@@ -132,6 +151,7 @@ namespace SmashScoreboard
 		static PlayerOneSelectWindow* CreateWindow(std::string winName = "", int styleIndex = 1);
 
 		void perframe() override;
+		std::string exportToSSSB() override;
 	};
 
 	class AddPlayerSelectWindowWindow : public SmashScoreboardWindow
@@ -172,6 +192,7 @@ namespace SmashScoreboard
 		static PlayerTextWindow* CreateWindow(std::string winName = "", int styleIndex = 1);
 
 		void perframe() override;
+		std::string exportToSSSB() override;
 	};
 
 	class AddPlayerTextWindow : public SmashScoreboardWindow

@@ -7,6 +7,8 @@ namespace fs = std::filesystem;
 unsigned int SmashScoreboard::UNIQUE_INT_CTR = 0;
 bool SmashScoreboard::ISFILEWINDOWOPEN = false;
 
+bool SmashScoreboard::ISDIALOGOPEN = false;
+
 std::vector<std::shared_ptr<SmashScoreboard::SmashScoreboardWindow>> SmashScoreboard::windowList;
 
 // LoadFromSSSB()
@@ -98,9 +100,40 @@ SmashScoreboard::SmashScoreboardWindow* SmashScoreboard::SmashScoreboardWindow::
 	return win.get();
 }
 
-// [SECTION] OpenFileWindow
+// [SECTION] DialogWindow
 
-//CONSTRUCTOR DEFINED IN SMASHSCOREBOARDWIDGETS.H AS IT IS PROTECTED
+SmashScoreboard::DialogWindow::DialogWindow(std::string dialogTitle, std::string dialogContents, GLuint iconImg)
+	:SmashScoreboardWindow(), dialogTitle(dialogTitle), dialogContents(dialogContents), iconImg(iconImg)
+{
+	ISDIALOGOPEN = true;
+}
+
+SmashScoreboard::DialogWindow* SmashScoreboard::DialogWindow::CreateWindow(std::string dialogTitle, std::string dialogContents, GLuint iconImg)
+{
+	std::shared_ptr<SmashScoreboardWindow> win = std::make_shared<DialogWindow>(dialogTitle, dialogContents, iconImg);
+	windowList.push_back(win);
+	return (DialogWindow*)win.get();
+}
+
+void SmashScoreboard::DialogWindow::perframe()
+{
+	if (this->isVisible)
+	{
+		ImGui::StyleColorsLight();
+		ImGui::SetWindowSize(ImVec2(500, 200), ImGuiCond_Always);
+
+		ImGui::Begin((this->dialogTitle + "###" + this->dialogTitle).c_str(), &this->isVisible, ImGuiWindowFlags_NoResize);
+		if (this->iconImg != 0)
+		{
+			ImGui::Image((void*)this->iconImg, ImVec2(32, 32));
+			ImGui::SameLine();
+		}
+		ImGui::TextWrapped(this->dialogContents.c_str());
+		ImGui::End();
+	}
+}
+
+// [SECTION] OpenFileWindow
 
 std::shared_ptr<SmashScoreboard::OpenFileWindow> SmashScoreboard::OpenFileWindow::filewindowptr = nullptr;
 int SmashScoreboard::OpenFileWindow::currentCallback = 0;
@@ -130,7 +163,12 @@ void SmashScoreboard::OpenFileWindow::perframe()
 		SmashScoreboard::StyleColorsFileOpenMenu();
 		ImGui::SetNextWindowSize(ImVec2(windowWidth, windowHeight));
 		ImGui::SetNextWindowPos(ImVec2(0, 0));
-		ImGui::Begin(this->windowName.c_str(), &this->isVisible, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus);
+
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus;
+		if (ISDIALOGOPEN)
+			flags = flags | ImGuiWindowFlags_NoInputs;
+
+		ImGui::Begin(this->windowName.c_str(), NULL, flags);
 
 		ImGui::Text("Path:"); ImGui::SameLine();
 		if (ImGui::InputText("##Path", this->folderpathbuf, IM_ARRAYSIZE(this->folderpathbuf), ImGuiInputTextFlags_EnterReturnsTrue))
@@ -357,9 +395,15 @@ void SmashScoreboard::PlayerOneSelectWindow::perframe()
 {
 	if (this->isVisible)
 	{
-		StyleColorsFromIndex(this->styleIndex);
+		ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_FirstUseEver);
 
-		ImGui::Begin((this->windowName + "###" + this->windowName).c_str() , &(this->isVisible));
+		StyleColorsFromIndex(this->styleIndex);
+		
+		ImGuiWindowFlags flags = 0;
+		if (ISDIALOGOPEN)
+			flags += ImGuiWindowFlags_NoInputs;
+
+		ImGui::Begin((this->windowName + "###" + this->windowName).c_str() , &(this->isVisible), flags);
 		ImGui::InputTextWithHint("", "Player 1's character", pName, IM_ARRAYSIZE(pName)); ImGui::SameLine();
 		SmashScoreboard::HelpMarker("Input the name of Player 1's character (eg. Mario)");
 
@@ -415,6 +459,16 @@ void SmashScoreboard::PlayerOneSelectWindow::perframe()
 	}
 }
 
+std::string SmashScoreboard::PlayerOneSelectWindow::exportToSSSB()
+{
+	std::string output = "start CharacterWindow\n";
+	output += "styleIndex " + std::to_string(this->styleIndex) + "\n";
+	output += "windowName " + this->windowName + "\n";
+	output += "end\n\n";
+
+	return output;
+}
+
 // [SECTION] AddPlayerSelectWindowWindow()
 
 SmashScoreboard::AddPlayerSelectWindowWindow::AddPlayerSelectWindowWindow()
@@ -433,7 +487,11 @@ void SmashScoreboard::AddPlayerSelectWindowWindow::perframe()
 	{
 		StyleColorsFromIndex(this->styleIndex);
 
-		ImGui::Begin(("Add a new Character Selector Window" + this->windowTitleIdentifier).c_str(), &this->isVisible, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
+		if (ISDIALOGOPEN)
+			flags = flags | ImGuiWindowFlags_NoInputs;
+
+		ImGui::Begin(("Add a new Character Selector Window" + this->windowTitleIdentifier).c_str(), &this->isVisible, flags);
 		const char* items[] = { "Red", "Blue", "Yellow", "Green"};
 		int item_current_idx = this->styleIndex - 1;            // Here our selection data is an index.
 		const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
@@ -518,7 +576,12 @@ void SmashScoreboard::PlayerTextWindow::perframe()
 		ImGui::SetNextWindowSize(ImVec2(400, 100), ImGuiCond_FirstUseEver);
 
 		SmashScoreboard::StyleColorsFromIndex(this->styleIndex);
-		ImGui::Begin((this->windowName + "###" + this->windowName).c_str(), &this->isVisible);
+
+		ImGuiWindowFlags flags = 0;
+		if (ISDIALOGOPEN)
+			flags = flags | ImGuiWindowFlags_NoInputs;
+
+		ImGui::Begin((this->windowName + "###" + this->windowName).c_str(), &this->isVisible, flags);
 
 		ImGui::Text("Player's Name");
 		ImGui::SameLine();
@@ -563,6 +626,16 @@ void SmashScoreboard::PlayerTextWindow::perframe()
 	}
 }
 
+std::string SmashScoreboard::PlayerTextWindow::exportToSSSB()
+{
+	std::string output = "start NameWindow\n";
+	output += "styleIndex " + std::to_string(this->styleIndex) + "\n";
+	output += "windowName " + this->windowName + "\n";
+	output += "end\n\n";
+
+	return output;
+}
+
 // [SECTION] AddPlayerTextWindow()
 
 SmashScoreboard::AddPlayerTextWindow::AddPlayerTextWindow()
@@ -580,8 +653,11 @@ void SmashScoreboard::AddPlayerTextWindow::perframe()
 	if (this->isVisible)
 	{
 		StyleColorsFromIndex(this->styleIndex);
+		ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
+		if (ISDIALOGOPEN)
+			flags = flags | ImGuiWindowFlags_NoInputs;
 
-		ImGui::Begin(("Add a new Character Selector Window" + this->windowTitleIdentifier).c_str(), &this->isVisible, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Begin(("Add a new Character Selector Window" + this->windowTitleIdentifier).c_str(), &this->isVisible, flags);
 		const char* items[] = { "Red", "Blue", "Yellow", "Green" };
 		int item_current_idx = this->styleIndex - 1;                    // Here our selection data is an index.
 		const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)

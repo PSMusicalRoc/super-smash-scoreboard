@@ -263,7 +263,21 @@ int main(int argc, char* argv[])
 						SmashScoreboard::OpenFileWindow::CreateWindow();
 						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(SmashScoreboard::OpenFileWindow::LOADSSSBWINDOWCONFIG);
 					}
-					if (ImGui::MenuItem("Save Window Config")) {}
+					if (ImGui::MenuItem("Save Window Config"))
+					{
+						std::fstream outputFile;
+						outputFile.open("new.sssb", std::ios::out | std::ios::trunc);
+						if (outputFile.is_open())
+						{
+							std::string output = "";
+							for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
+							{
+								output += SmashScoreboard::windowList[i].get()->exportToSSSB();
+							}
+							outputFile << output;
+							outputFile.close();
+						}
+					}
 					ImGui::EndMenu();
 				}
 				if (ImGui::MenuItem("Quit"))
