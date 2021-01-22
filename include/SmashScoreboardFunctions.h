@@ -22,6 +22,8 @@ namespace SmashScoreboard
 	extern GLuint FileSelect_UpOneLevelImage;
 	extern GLuint FileSelect_Folder;
 	extern GLuint FileSelect_File;
+	extern GLuint Dialogs_OK;
+	extern GLuint Dialogs_Warning;
 
 	void internalsInit();
 	void init(const char* pathToList);

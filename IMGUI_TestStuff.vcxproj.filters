@@ -45,6 +45,9 @@
     <ClCompile Include="src\SmashScoreboardWidgets\SmashScoreboardFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\imgui\imgui_tables.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\imgui_impl_sdl.h">
