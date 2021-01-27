@@ -67,6 +67,7 @@
     <None Include="imgui.ini" />
     <None Include="default.sssb" />
     <None Include="_new.sssb" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="res\font\ARLRDBD.TTF" />
