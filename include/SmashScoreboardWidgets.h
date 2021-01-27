@@ -14,6 +14,10 @@
 #define GetCurrentDir _getcwd
 #endif
 
+		//enum values for setting open window callback
+enum { OpenFileWindowCallback_LOADSSSBWINDOWCONFIG = 100 };
+enum { SaveFileWindowCallback_SAVESSSBWINDOWCONFIG = 100 };
+
 namespace SmashScoreboard
 {
 	//Int holder to make unique window instances
@@ -24,14 +28,15 @@ namespace SmashScoreboard
 	extern bool ISFILEWINDOWOPEN;
 	extern bool ISDIALOGOPEN;
 
-	void LoadFromSSSB(const char* filename);
+	bool LoadFromSSSB(const char* filename);
 
 	struct SmashScoreboardWindow
 	{
 		std::string windowName;
 
 		//Please don't use this, use CreateWindow instead
-		SmashScoreboardWindow(std::string winName = "default") : windowName(winName)
+		SmashScoreboardWindow(std::string winName = "default", std::string winType = "Normal Window")
+			: windowName(winName), windowTypeIdentifier(winType)
 		{
 			windowTitleIdentifier = "##" + std::to_string(UNIQUE_INT_CTR);
 			UNIQUE_INT_CTR++;
@@ -41,6 +46,7 @@ namespace SmashScoreboard
 		static SmashScoreboardWindow* CreateWindow();
 
 		std::string windowTitleIdentifier;
+		std::string windowTypeIdentifier;
 
 		template<typename T>
 		static void DeleteWindow(T* win, std::vector<std::shared_ptr<SmashScoreboardWindow>> &list)
@@ -68,7 +74,7 @@ namespace SmashScoreboard
 
 	class DialogWindow : public SmashScoreboardWindow
 	{
-	private:
+	protected:
 		std::string dialogTitle;
 		std::string dialogContents;
 		GLuint iconImg = 0;
@@ -83,6 +89,24 @@ namespace SmashScoreboard
 
 	};
 
+	//Subclasses of DialogWindow
+
+	class OKCancelDialogWindow : public DialogWindow
+	{
+	protected:
+		bool& flagToChange;
+
+	public:
+		OKCancelDialogWindow(std::string dialogTitle, std::string dialogContents, bool& flag, GLuint iconImg = 0);
+		~OKCancelDialogWindow() { ISDIALOGOPEN = false; }
+
+		static OKCancelDialogWindow* CreateWindow(std::string dialogTitle, std::string dialogContents, bool& flag, GLuint iconImg = 0);
+
+		void perframe() override;
+	};
+
+	//End Subclasses
+
 	class OpenFileWindow : public SmashScoreboardWindow
 	{
 	private:
@@ -92,6 +116,24 @@ namespace SmashScoreboard
 
 		std::string readableFolderPath;
 		std::string readableFileName;
+
+		//This value dictates whether or not the window
+		//is in save or open mode
+		static bool isInOpenMode;
+
+		//This allows the file menu to know whether or
+		//not it has opened a dialog for a particular
+		//action (i.e. whether it should do the action
+		//it thinks it should do yet)
+		bool hasCreatedDialogYet = false;
+
+		//This variable holds the result of the Y/N
+		//or OK/Cancel dialog that was created
+		bool resultOfDialog;
+
+		//Stores the path for the last opened file for
+		//callbacks using a Y/N or OK/Cancel Dialog
+		std::string openpath = "";
 
 		//start defining callbacks for "OnOpen" button.
 		//Template is returns bool, true if successful,
@@ -107,6 +149,10 @@ namespace SmashScoreboard
 		//This function loads a .sssb file and changes
 		//the windowList to suit it
 		bool LoadSSSBWindowConfig(std::string inFile);
+
+		//This function saves a .sssb file from the current
+		//layout
+		void SaveSSSBWindowConfig(std::string filepath);
 	
 	public:
 		OpenFileWindow()
@@ -118,22 +164,21 @@ namespace SmashScoreboard
 		}
 		~OpenFileWindow() {}
 
-		static OpenFileWindow* CreateWindow();
+		static OpenFileWindow* CreateWindow(bool isThisInOpenMode = true);
 		static void CloseWindow();
 
 		std::string windowTitleIdentifier;
-
-		bool isVisible = true;
+ 
 		void perframe() override;
-
-		//enum values for setting open window callback
-		enum {LOADSSSBWINDOWCONFIG = 100};
 
 		//and a function to change that value when the
 		//user loads the file select window
 		static void SetCallback(int callbackFlag = 0);
 
-		static OpenFileWindow* getWindowPtr() { return filewindowptr.get(); }
+		static OpenFileWindow* getWindowPtr()
+		{
+			return filewindowptr.get();
+		}
 	};
 
 	class PlayerOneSelectWindow : public SmashScoreboardWindow

@@ -13,8 +13,10 @@ std::vector<std::shared_ptr<SmashScoreboard::SmashScoreboardWindow>> SmashScoreb
 
 // LoadFromSSSB()
 
-void SmashScoreboard::LoadFromSSSB(const char* filename)
+bool SmashScoreboard::LoadFromSSSB(const char* filename)
 {
+	SmashScoreboard::windowList.clear();
+
 	std::fstream defaultLayout;
 	defaultLayout.open(filename, std::ios::in);
 	if (defaultLayout.is_open())
@@ -89,6 +91,11 @@ void SmashScoreboard::LoadFromSSSB(const char* filename)
 			}
 		}
 	}
+	else
+	{
+		return false;
+	}
+	return true;
 }
 
 // [SECTION] SmashScoreboardWindow()
@@ -103,7 +110,7 @@ SmashScoreboard::SmashScoreboardWindow* SmashScoreboard::SmashScoreboardWindow::
 // [SECTION] DialogWindow
 
 SmashScoreboard::DialogWindow::DialogWindow(std::string dialogTitle, std::string dialogContents, GLuint iconImg)
-	:SmashScoreboardWindow(), dialogTitle(dialogTitle), dialogContents(dialogContents), iconImg(iconImg)
+	:SmashScoreboardWindow("default", "Dialog"), dialogTitle(dialogTitle), dialogContents(dialogContents), iconImg(iconImg)
 {
 	ISDIALOGOPEN = true;
 }
@@ -120,15 +127,65 @@ void SmashScoreboard::DialogWindow::perframe()
 	if (this->isVisible)
 	{
 		ImGui::StyleColorsLight();
-		ImGui::SetWindowSize(ImVec2(500, 200), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(-1, -1), ImGuiCond_Always);
 
 		ImGui::Begin((this->dialogTitle + "###" + this->dialogTitle).c_str(), &this->isVisible, ImGuiWindowFlags_NoResize);
+
 		if (this->iconImg != 0)
 		{
-			ImGui::Image((void*)this->iconImg, ImVec2(32, 32));
+			ImGui::Image((void*)this->iconImg, ImVec2(64, 64));
 			ImGui::SameLine();
 		}
-		ImGui::TextWrapped(this->dialogContents.c_str());
+		ImGui::Text(this->dialogContents.c_str());
+
+		ImGui::End();
+	}
+}
+
+// [SECTION] OKCancelDialogWindow
+
+SmashScoreboard::OKCancelDialogWindow::OKCancelDialogWindow(std::string dialogTitle, std::string dialogContents, bool& flag, GLuint iconImg)
+	:DialogWindow(dialogTitle, dialogContents, iconImg), flagToChange(flag)
+{
+	flagToChange = false;
+}
+
+SmashScoreboard::OKCancelDialogWindow* SmashScoreboard::OKCancelDialogWindow::CreateWindow(std::string dialogTitle, std::string dialogContents, bool& flag, GLuint iconImg)
+{
+	std::shared_ptr<SmashScoreboardWindow> win = std::make_shared<OKCancelDialogWindow>(dialogTitle, dialogContents, flag, iconImg);
+	windowList.push_back(win);
+	return (OKCancelDialogWindow*)win.get();
+}
+
+void SmashScoreboard::OKCancelDialogWindow::perframe()
+{
+	if (this->isVisible)
+	{
+		ImGui::StyleColorsLight();
+		ImGui::SetNextWindowSize(ImVec2(-1, -1), ImGuiCond_Always);
+
+		ImGui::Begin((this->dialogTitle + "###" + this->dialogTitle).c_str(), &this->isVisible, ImGuiWindowFlags_NoResize);
+
+		if (this->iconImg != 0)
+		{
+			ImGui::Image((void*)this->iconImg, ImVec2(64, 64));
+			ImGui::SameLine();
+		}
+		ImGui::Text(this->dialogContents.c_str());
+
+		ImGui::Separator();
+		
+		ImGui::Dummy(ImVec2(64, 20));
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+			this->isVisible = false;
+		ImGui::SameLine();
+		if (ImGui::Button("OK"))
+		{
+			this->flagToChange = true;
+			this->isVisible = false;
+		}
+
 		ImGui::End();
 	}
 }
@@ -137,14 +194,16 @@ void SmashScoreboard::DialogWindow::perframe()
 
 std::shared_ptr<SmashScoreboard::OpenFileWindow> SmashScoreboard::OpenFileWindow::filewindowptr = nullptr;
 int SmashScoreboard::OpenFileWindow::currentCallback = 0;
+bool SmashScoreboard::OpenFileWindow::isInOpenMode = true;
 
-SmashScoreboard::OpenFileWindow* SmashScoreboard::OpenFileWindow::CreateWindow()
+SmashScoreboard::OpenFileWindow* SmashScoreboard::OpenFileWindow::CreateWindow(bool isThisInOpenMode)
 {
 	if (filewindowptr == nullptr)
 	{
 		filewindowptr = std::make_shared<OpenFileWindow>();
 	}
 	ISFILEWINDOWOPEN = true;
+	isInOpenMode = isThisInOpenMode;
 
 	return filewindowptr.get();
 }
@@ -158,17 +217,27 @@ void SmashScoreboard::OpenFileWindow::SetCallback(int callbackFlag) { currentCal
 
 void SmashScoreboard::OpenFileWindow::perframe()
 {
-	if (this->isVisible)
+	if (ISFILEWINDOWOPEN)
 	{
 		SmashScoreboard::StyleColorsFileOpenMenu();
 		ImGui::SetNextWindowSize(ImVec2(windowWidth, windowHeight));
 		ImGui::SetNextWindowPos(ImVec2(0, 0));
 
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus;
+		ImGuiWindowFlags childflags = 0;
 		if (ISDIALOGOPEN)
+		{
 			flags = flags | ImGuiWindowFlags_NoInputs;
+			childflags = childflags | ImGuiWindowFlags_NoInputs;
+		}
 
-		ImGui::Begin(this->windowName.c_str(), NULL, flags);
+		//LEAVING A NOTE HERE SO THAT I REMEMBER TO CHANGE THE IDENTIFIER TO FILEMENU AND MAKE THE NAME DYNAMIC
+		if (this->isInOpenMode)
+			this->windowName = "Open File";
+		else
+			this->windowName = "Save File";
+
+		ImGui::Begin((this->windowName + "###FileMenu").c_str(), NULL, flags);
 
 		ImGui::Text("Path:"); ImGui::SameLine();
 		if (ImGui::InputText("##Path", this->folderpathbuf, IM_ARRAYSIZE(this->folderpathbuf), ImGuiInputTextFlags_EnterReturnsTrue))
@@ -179,7 +248,7 @@ void SmashScoreboard::OpenFileWindow::perframe()
 				auto __search = _testpath.find('\\');
 				if (__search == _testpath.npos)
 					_testpath += '\\';
-				
+
 				for (const auto& entry : fs::directory_iterator(_testpath))
 				{
 				}
@@ -247,13 +316,13 @@ void SmashScoreboard::OpenFileWindow::perframe()
 						this->readableFolderPath += '\\';
 					}
 				}
-					
+
 			}
 
 			strcpy_s(this->folderpathbuf, this->readableFolderPath.c_str());
 		}
 
-		ImGui::BeginChild((ImGuiID)1, ImVec2(0, windowHeight - 120), true);
+		ImGui::BeginChild((ImGuiID)1, ImVec2(0, windowHeight - 120), true, childflags);
 		std::string path = this->readableFolderPath;
 		int i = 0;
 		for (const auto& entry : fs::directory_iterator(path))
@@ -270,7 +339,7 @@ void SmashScoreboard::OpenFileWindow::perframe()
 				{
 					name.replace(name.find(path), std::string(path).length(), "");
 				}
-				
+
 
 				ImGui::Image((void*)(intptr_t)FileSelect_Folder, ImVec2(16, 16)); ImGui::SameLine();
 
@@ -310,7 +379,7 @@ void SmashScoreboard::OpenFileWindow::perframe()
 				{
 					name.replace(name.find(path + "\\"), std::string(path + "\\").length(), "");
 				}
-				
+
 				ImGui::Image((void*)(intptr_t)FileSelect_File, ImVec2(16, 16)); ImGui::SameLine();
 
 				ImGui::TreeNodeEx((void*)(intptr_t)i, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, name.c_str());
@@ -330,23 +399,94 @@ void SmashScoreboard::OpenFileWindow::perframe()
 		ImGui::SameLine();
 		if (ImGui::Button("Cancel"))
 		{
-			this->isVisible = false;
+			ISFILEWINDOWOPEN = false;
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Open File"))
+
+		std::string buttonText;
+		if (this->isInOpenMode)
+			buttonText = "Open File";
+		else
+			buttonText = "Save File";
+
+		if (ImGui::Button(buttonText.c_str()))
 		{
-			std::string openpath = this->readableFolderPath;
+			this->openpath = this->readableFolderPath;
 			if (readableFolderPath.back() != '\\')
 			{
-				openpath += '\\';
+				this->openpath += '\\';
 			}
-			openpath += this->readableFileName;
+			this->openpath += this->filenamebuf;
 
-			if (this->currentCallback == this->LOADSSSBWINDOWCONFIG)
+			if (this->isInOpenMode)
 			{
-				if (this->LoadSSSBWindowConfig(openpath))
+				if (this->currentCallback == OpenFileWindowCallback_LOADSSSBWINDOWCONFIG)
 				{
-					this->isVisible = false;
+					if (this->LoadSSSBWindowConfig(this->openpath))
+					{
+						CloseWindow();
+					}
+					else
+					{
+						DialogWindow::CreateWindow("Failed to open window config",
+							"Smash Scoreboard failed to open the window config file at\n\n"
+							+ this->openpath
+							+ "\n\nPlease check that the file exists and has the extension '.sssb'", SmashScoreboard::Dialogs_Warning);
+					}
+				}
+			}
+			else
+			{
+				if (this->currentCallback == SaveFileWindowCallback_SAVESSSBWINDOWCONFIG)
+				{
+					if (this->openpath.rfind(".sssb") != this->openpath.length() - 5)
+					{
+						this->openpath += ".sssb";
+					}
+
+					std::fstream checkForFile;
+					checkForFile.open(this->openpath, std::ios::in);
+					if (checkForFile.is_open())
+					{
+						checkForFile.close();
+						OKCancelDialogWindow::CreateWindow(
+							"File already exists",
+							"This file at path:\n\n"
+							+ this->openpath
+							+ "\n\nalready exists. Do you want to overwrite it?",
+							this->resultOfDialog,
+							Dialogs_Warning
+						);
+						this->hasCreatedDialogYet = true;
+					}
+					else
+					{
+						SaveSSSBWindowConfig(this->openpath);
+						CloseWindow();
+					}
+				}
+			}
+		}
+
+		if (this->hasCreatedDialogYet && !ISDIALOGOPEN)
+		{
+			if (this->isInOpenMode)
+			{
+				if (this->currentCallback == OpenFileWindowCallback_LOADSSSBWINDOWCONFIG)
+				{
+					this->hasCreatedDialogYet = false;
+				}
+			}
+			else
+			{
+				if (this->currentCallback == SaveFileWindowCallback_SAVESSSBWINDOWCONFIG)
+				{
+					if (this->resultOfDialog)
+					{
+						SaveSSSBWindowConfig(this->openpath);
+						this->hasCreatedDialogYet = false;
+						CloseWindow();
+					}
 				}
 			}
 		}
@@ -360,11 +500,35 @@ void SmashScoreboard::OpenFileWindow::perframe()
 bool SmashScoreboard::OpenFileWindow::LoadSSSBWindowConfig(std::string filepath)
 {
 	if (filepath.rfind(".sssb") != filepath.length() - 5)
-	{
 		return false;
-	}
-	LoadFromSSSB(filepath.c_str());
+	if (!LoadFromSSSB(filepath.c_str()))
+		return false;
 	return true;
+}
+
+void SmashScoreboard::OpenFileWindow::SaveSSSBWindowConfig(std::string filepath)
+{
+	std::fstream outputFile;
+	outputFile.open(filepath, std::ios::out | std::ios::trunc);
+	if (outputFile.is_open())
+	{
+		std::string output = "";
+		for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
+		{
+			output += SmashScoreboard::windowList[i].get()->exportToSSSB();
+		}
+		outputFile << output;
+		outputFile.close();
+		SmashScoreboard::DialogWindow::CreateWindow(
+			"Succesfully saved!",
+			"The file was saved to:\n\n'"
+			+ filepath
+			+ "'", SmashScoreboard::Dialogs_OK);
+	}
+	else
+	{
+		SmashScoreboard::DialogWindow::CreateWindow("Failed to save", "The file could not be saved.", SmashScoreboard::Dialogs_Warning);
+	}
 }
 
 // [SECTION] PlayerOneSelectWindow()
@@ -519,7 +683,7 @@ void SmashScoreboard::AddPlayerSelectWindowWindow::perframe()
 			this->isVisible = false;
 		ImGui::SameLine();
 
-		bool shouldDisable = checkForTakenIdentifier(std::string(this->newWindowName)) || strcmp(this->newWindowName, "");
+		bool shouldDisable = checkForTakenIdentifier(std::string(this->newWindowName)) || strcmp(this->newWindowName, "") == 0;
 
 		if (!shouldDisable)
 		{

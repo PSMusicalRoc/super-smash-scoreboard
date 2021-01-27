@@ -12,6 +12,8 @@ GLuint SmashScoreboard::FileSelect_GoImage = 0;
 GLuint SmashScoreboard::FileSelect_UpOneLevelImage = 0;
 GLuint SmashScoreboard::FileSelect_Folder = 0;
 GLuint SmashScoreboard::FileSelect_File = 0;
+GLuint SmashScoreboard::Dialogs_OK = 0;
+GLuint SmashScoreboard::Dialogs_Warning = 0;
 
 SmashScoreboard::CharacterName::CharacterName(std::string str)
 	:text(str) {}
@@ -31,6 +33,12 @@ void SmashScoreboard::internalsInit()
 		doneWithInit = true;
 	FileSelect_File = LoadAndInitTex("res/internals/File.png", 103);
 	if (FileSelect_File == 0)
+		doneWithInit = true;
+	Dialogs_OK = LoadAndInitTex("res/internals/OK.png", 104);
+	if (Dialogs_OK == 0)
+		doneWithInit = true;
+	Dialogs_Warning = LoadAndInitTex("res/internals/Warning.png", 105);
+	if (Dialogs_Warning == 0)
 		doneWithInit = true;
 }
 

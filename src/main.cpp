@@ -243,10 +243,32 @@ int main(int argc, char* argv[])
 		if (SmashScoreboard::ISFILEWINDOWOPEN)
 		{
 			SmashScoreboard::OpenFileWindow* win = SmashScoreboard::OpenFileWindow::getWindowPtr();
-			if (!win->isVisible)
+			if (!SmashScoreboard::ISFILEWINDOWOPEN)
 				win->CloseWindow();
 			else
+			{
+				if (SmashScoreboard::windowList.size() != 0)
+				{
+					for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
+					{
+						if (!SmashScoreboard::windowList[i].get()->isVisible)
+						{
+							SmashScoreboard::SmashScoreboardWindow::DeleteWindow(SmashScoreboard::windowList[i].get(), SmashScoreboard::windowList);
+							i--;
+						}
+						else
+						{
+							if (SmashScoreboard::windowList[i].get()->windowTypeIdentifier == "Dialog")
+								SmashScoreboard::windowList[i].get()->perframe();
+						}
+
+					}
+				}
 				win->perframe();
+				auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
+				backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
+					SmashScoreboard::windowHeight), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
+			}
 		}
 		else
 		{
@@ -260,23 +282,13 @@ int main(int argc, char* argv[])
 				{
 					if (ImGui::MenuItem("Load Window Config"))
 					{
-						SmashScoreboard::OpenFileWindow::CreateWindow();
-						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(SmashScoreboard::OpenFileWindow::LOADSSSBWINDOWCONFIG);
+						SmashScoreboard::OpenFileWindow::CreateWindow(true);
+						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(OpenFileWindowCallback_LOADSSSBWINDOWCONFIG);
 					}
 					if (ImGui::MenuItem("Save Window Config"))
 					{
-						std::fstream outputFile;
-						outputFile.open("new.sssb", std::ios::out | std::ios::trunc);
-						if (outputFile.is_open())
-						{
-							std::string output = "";
-							for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
-							{
-								output += SmashScoreboard::windowList[i].get()->exportToSSSB();
-							}
-							outputFile << output;
-							outputFile.close();
-						}
+						SmashScoreboard::OpenFileWindow::CreateWindow(false);
+						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(SaveFileWindowCallback_SAVESSSBWINDOWCONFIG);
 					}
 					ImGui::EndMenu();
 				}
