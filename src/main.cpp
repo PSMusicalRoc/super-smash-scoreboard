@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
 	SDL_RenderPresent(renderer);
 
 	SmashScoreboard::internalsInit();
-	SmashScoreboard::init("res/ImageCache/Smash Ultimate Full Art/_CharList.txt");
+	SmashScoreboard::init("res/ImageCache/Smash Ultimate Full Art/_CharList.txt", renderer, loader, destRect);
 
 	//DESTROY RENDERER AND LOADER TEXTURES
 
