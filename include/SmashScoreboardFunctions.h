@@ -1,4 +1,6 @@
 #pragma once
+#include <SDL.h>
+#include <SDL_image.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui_impl_sdl.h>
@@ -26,7 +28,7 @@ namespace SmashScoreboard
 	extern GLuint Dialogs_Warning;
 
 	void internalsInit();
-	void init(const char* pathToList);
+	void init(const char* pathToList, SDL_Renderer *ren, SDL_Texture* loader, SDL_Rect& loaderrect);
 
 	struct CharacterName
 	{

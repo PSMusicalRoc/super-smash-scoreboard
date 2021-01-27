@@ -1,6 +1,4 @@
 #include <SmashScoreboardFunctions.h>
-#include <SDL.h>
-#include <SDL_image.h>
 
 std::vector<SmashScoreboard::CharacterName> SmashScoreboard::characterList;
 std::vector<GLuint> SmashScoreboard::textureList;
@@ -42,7 +40,7 @@ void SmashScoreboard::internalsInit()
 		doneWithInit = true;
 }
 
-void SmashScoreboard::init(const char* pathToFile)
+void SmashScoreboard::init(const char* pathToFile, SDL_Renderer* ren, SDL_Texture* loader, SDL_Rect& loaderrect)
 {
 	if (!doneWithInit)
 	{
@@ -66,9 +64,21 @@ void SmashScoreboard::init(const char* pathToFile)
 				//texture is in textureList
 				int indexTex = 0;
 
+				SDL_Surface* surfs[7];
+				SDL_Texture* loading[7];
+
+				for (int j = 0; j < 7; j++)
+				{
+					surfs[j] = IMG_Load(("res/loader/spin_anim/frame-" + std::to_string(j) + ".png").c_str());
+					loading[j] = SDL_CreateTextureFromSurface(ren, surfs[j]);
+				}
+
 				for (int i = 0; i < characterList.size(); i++)
 				{
 					//Setup iterator variables
+
+					//Graphics iterator
+					int frameOfRotator = 0;
 
 					//Defines whether the program should run another
 					//loop to find the next image for a character
@@ -84,6 +94,26 @@ void SmashScoreboard::init(const char* pathToFile)
 
 					//Store first texture index in the character class
 					characterList[i].indexLow = indexTex;
+
+					if (i % 5 == 0)
+					{
+						SDL_Rect spinnerRect;
+
+						frameOfRotator++;
+
+						if (frameOfRotator == 7)
+							frameOfRotator = 0;
+
+						spinnerRect.w = surfs[frameOfRotator]->w / 4;
+						spinnerRect.h = surfs[frameOfRotator]->h / 4;
+						spinnerRect.x = (SmashScoreboard::windowWidth - surfs[frameOfRotator]->w) / 2;
+						spinnerRect.y = SmashScoreboard::windowHeight - 100;
+
+						SDL_RenderClear(ren);
+						SDL_RenderCopy(ren, loader, NULL, &loaderrect);
+						SDL_RenderCopy(ren, loading[frameOfRotator], NULL, &spinnerRect);
+						SDL_RenderPresent(ren);
+					}
 
 					while (moreImages)
 					{
@@ -130,7 +160,16 @@ void SmashScoreboard::init(const char* pathToFile)
 						}
 						//If num > 99, then no more character images
 						else
+						{
 							moreImages = false;
+
+							for (int j = 0; j < 7; j++)
+							{
+
+								SDL_DestroyTexture(loading[j]);
+								SDL_FreeSurface(surfs[j]);
+							}
+						}
 					}
 
 					//Sets the number of images for this
@@ -536,7 +575,7 @@ GLuint SmashScoreboard::LoadAndInitTex(const char* path, GLuint customID)
 		if (surf->format->BytesPerPixel == 4)
 			mode = GL_RGBA;
 
-		glTexImage2D(GL_TEXTURE_2D, 0, mode, surf->w, surf->h, 0, mode, GL_UNSIGNED_BYTE, surf->pixels);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA, surf->w, surf->h, 0, mode, GL_UNSIGNED_BYTE, surf->pixels);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
