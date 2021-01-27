@@ -1,0 +1,86 @@
+Banjo
+Bayonetta
+Bowser
+Bowser Jr
+Byleth
+Captain Falcon
+Charizard
+Chrom
+Cloud
+Corrin
+Daisy
+Dark Pit
+Dark Samus
+Diddy Kong
+Donkey Kong
+Dr. Mario
+Duck Hunt
+Falco
+Fox
+Ganondorf
+Greninja
+Hero
+Ice Climbers
+Ike
+Incineroar
+Inkling
+Isabelle
+Ivysaur
+Jigglypuff
+Joker
+Joker Unmasked
+Ken
+King Dedede
+King K. Rool
+Kirby
+Link
+Little Mac
+Lucario
+Lucas
+Lucina
+Luigi
+Mario
+Marth
+Mega Man
+Meta Knight
+Mewtwo
+Mii
+Min Min
+Mr. Game and Watch
+Ness
+Olimar
+Pac-Man
+Palutena
+Peach
+Pichu
+Pikachu
+Piranha Plant
+Pit
+Pokemon Trainer
+Pokemon Trainer with Pokemon
+R.O.B
+Richter
+Ridley
+Robin
+Rosalina and Luma
+Roy
+Ryu
+Samus
+Sephiroth
+Sheik
+Shulk
+Simon
+Snake
+Sonic
+Squirtle
+Steve
+Terry
+Toon Link
+Villager
+Wario
+Wii Fit Trainer
+Wolf
+Yoshi
+Young Link
+Zelda
+Zero Suit Samus
