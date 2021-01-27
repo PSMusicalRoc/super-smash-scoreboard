@@ -88,5 +88,11 @@
     <Image Include="res\loader\icon.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\loader\background.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\loader\loader.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

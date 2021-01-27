@@ -340,12 +340,8 @@ ASALocalRun/
 healthchecksdb
 
 # Resource files that don't need to be added to the repo yet
-res/ImageCache
 Output
-res/loader
 resource.h
 SmashScoreboard.rc
 icon1.ico
-default.sssb
-_new.sssb
 *.sssb
