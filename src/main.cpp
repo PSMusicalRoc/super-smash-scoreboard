@@ -315,6 +315,35 @@ int main(int argc, char* argv[])
 
 			ImGui::EndMainMenuBar();
 
+			// [SECTION] Right Click Context Menu
+
+			ImGui::StyleColorsLight();
+			if (ImGui::BeginPopupContextVoid("MainMenuPopup"))
+			{
+				if (ImGui::BeginMenu("New Window"))
+				{
+					ImGui::Separator();
+
+					if (ImGui::MenuItem("Character Select Window"))
+					{
+						if (!SmashScoreboard::checkForTakenIdentifier("Create New Character Select Window"))
+							SmashScoreboard::AddPlayerSelectWindowWindow::CreateWindow();
+					}
+
+					if (ImGui::MenuItem("Name Input Window"))
+					{
+						if (!SmashScoreboard::checkForTakenIdentifier("Create New Player Name Window"))
+							SmashScoreboard::AddPlayerTextWindow::CreateWindow();
+					}
+
+					ImGui::EndMenu();
+				}
+				ImGui::Separator();
+				if (ImGui::MenuItem("Quit"))
+					shouldBeRunning = false;
+				ImGui::EndPopup();
+			}
+
 			//Frame
 
 #ifndef NDEBUG
