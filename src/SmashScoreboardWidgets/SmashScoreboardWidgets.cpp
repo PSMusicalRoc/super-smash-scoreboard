@@ -132,19 +132,22 @@ void SmashScoreboard::DialogWindow::perframe()
 {
 	if (this->isVisible)
 	{
+		ImGui::OpenPopup(this->dialogTitle.c_str(), ImGuiPopupFlags_AnyPopupLevel);
+
 		ImGui::StyleColorsLight();
 		ImGui::SetNextWindowSize(ImVec2(-1, -1), ImGuiCond_Always);
 
-		ImGui::Begin((this->dialogTitle + "###" + this->dialogTitle).c_str(), &this->isVisible, ImGuiWindowFlags_NoResize);
-
-		if (this->iconImg != 0)
+		if (ImGui::BeginPopupModal((this->dialogTitle).c_str(), &this->isVisible))
 		{
-			ImGui::Image((void*)this->iconImg, ImVec2(64, 64));
-			ImGui::SameLine();
-		}
-		ImGui::Text(this->dialogContents.c_str());
+			if (this->iconImg != 0)
+			{
+				ImGui::Image((void*)this->iconImg, ImVec2(64, 64));
+				ImGui::SameLine();
+			}
+			ImGui::Text(this->dialogContents.c_str());
 
-		ImGui::End();
+			ImGui::EndPopup();
+		}
 	}
 }
 
@@ -167,10 +170,12 @@ void SmashScoreboard::OKCancelDialogWindow::perframe()
 {
 	if (this->isVisible)
 	{
+		ImGui::OpenPopup(this->dialogTitle.c_str(), ImGuiPopupFlags_AnyPopupLevel);
+
 		ImGui::StyleColorsLight();
 		ImGui::SetNextWindowSize(ImVec2(-1, -1), ImGuiCond_Always);
 
-		ImGui::Begin((this->dialogTitle + "###" + this->dialogTitle).c_str(), &this->isVisible, ImGuiWindowFlags_NoResize);
+		ImGui::BeginPopupModal(this->dialogTitle.c_str(), &this->isVisible);
 
 		if (this->iconImg != 0)
 		{
@@ -192,7 +197,7 @@ void SmashScoreboard::OKCancelDialogWindow::perframe()
 			this->isVisible = false;
 		}
 
-		ImGui::End();
+		ImGui::EndPopup();
 	}
 }
 
