@@ -15,6 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <typeinfo>
+#include <thread>
 
 #include "SmashScoreboardFunctions.h"
 #include "SmashScoreboardWidgets.h"
@@ -62,12 +63,11 @@ int main(int argc, char* argv[])
 	}
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-	//Load Loading image
-	SDL_Surface* loader_surf = IMG_Load("res/loader/loader.png");
-	SDL_Texture* loader = SDL_CreateTextureFromSurface(renderer, loader_surf);
-
 	//Create OPENGL Context for ImGui
+	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
+
 	SDL_GLContext context = SDL_GL_CreateContext(window);
+	SDL_GLContext threadContext = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, context);
 
 	//init GLAD
@@ -81,26 +81,183 @@ int main(int argc, char* argv[])
 	SDL_Event event;
 
 	//LOAD SMASH SCOREBOARD
-	GLuint backgroundImage = SmashScoreboard::LoadAndInitTex("res/loader/background.png");
 
-	SDL_Rect destRect;
-	destRect.w = loader_surf->w;
-	destRect.h = loader_surf->h;
-	destRect.x = (SmashScoreboard::windowWidth / 2) - (destRect.w / 2);
-	destRect.y = (SmashScoreboard::windowHeight / 2) - (destRect.h / 2);
+	//Load Loading image
+	GLuint loader = SmashScoreboard::LoadAndInitTex("res/loader/loader.png", 0, false);
 
-	SDL_RenderClear(renderer);
-	SDL_RenderCopy(renderer, loader, NULL, &destRect);
-	SDL_RenderPresent(renderer);
+	GLuint backgroundImage = SmashScoreboard::LoadAndInitTex("res/loader/background.png", 0, false);
+
+	GLfloat headerRect_verts[] = {
+		
+		//positions			//texture coords
+		-0.98,	0.98,		0.0,	0.0,
+		0.98,	0.98,		1.0,	0.0,
+		-0.98,	0.0,		0.0,	1.0,
+		-0.98,	0.0,		0.0,	1.0,
+		0.98,	0.0,		1.0,	1.0,
+		0.98,	0.98,		1.0,	0.0
+	};
+
+	GLuint headerRect = 10;
+	glGenVertexArrays(1, &headerRect);
+	glBindVertexArray(headerRect);
+
+	GLuint headerRect_buf = 11;
+	glGenBuffers(1, &headerRect_buf);
+	glBindBuffer(GL_ARRAY_BUFFER, headerRect_buf);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(headerRect_verts), headerRect_verts, GL_STATIC_DRAW);
+
+	//Binding Vertex Attributes
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+
+	//spinner textures and model
+
+	GLuint spinner_texs[7];
+
+	for (int i = 0; i < 7; i++)
+	{
+		spinner_texs[i] = SmashScoreboard::LoadAndInitTex(("res/loader/spin_anim/frame-" + std::to_string(i) + ".png").c_str(), 0, false);
+	}
+
+	GLfloat spinnerRect_verts[] = {
+		
+		//positions			//texture coords
+		-0.05,	-0.25,		0.0,	0.0,
+		0.05,	-0.25,		1.0,	0.0,
+		0.05,	-0.35,		1.0,	1.0,
+		0.05,	-0.35,		1.0,	1.0,
+		-0.05,	-0.35,		0.0,	1.0,
+		-0.05,	-0.25,		0.0,	0.0,
+	};
+
+	GLuint spinnerRect = 12;
+	glGenVertexArrays(1, &spinnerRect);
+	glBindVertexArray(spinnerRect);
+
+	GLuint spinnerRect_buf = 13;
+	glGenBuffers(1, &spinnerRect_buf);
+	glBindBuffer(GL_ARRAY_BUFFER, spinnerRect_buf);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(spinnerRect_verts), spinnerRect_verts, GL_STATIC_DRAW);
+
+	//Spinner Vertex Attributes
+
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+
+	//Vertex Shader
+
+	const char* vertexShaderSource = "#version 330 core\n"
+		"layout (location = 0) in vec2 aPos;\n"
+		"layout (location = 1) in vec2 aTexCoord;\n"
+		"\n"
+		"out vec2 TexCoord;\n"
+		"\n"
+		"void main()\n"
+		"{\n"
+		"   gl_Position = vec4(aPos.x, aPos.y, 0, 1.0);\n"
+		"	TexCoord = aTexCoord;\n"
+		"}\0";
+	GLuint vertexShader;
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
+
+	int  success;
+	char infoLog[512];
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+
+	//Frag Shader
+
+	const char* fragmentShaderSource = "#version 330 core\n"
+		"in vec2 TexCoord;\n"
+		"out vec4 FragColor;\n"
+		"uniform sampler2D textureData;\n"
+		"void main()\n"
+		"{\n"
+		"FragColor = texture(textureData, TexCoord);\n"
+		"}";
+	GLuint fragmentShader;
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+
+	//Shader Program
+
+	GLuint shaderProgram;
+	shaderProgram = glCreateProgram();
+
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if (!success)
+	{
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		std::cout << "ERROR::PROGRAM::LINK_FAILED\n" << infoLog << std::endl;
+	}
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	glUseProgram(shaderProgram);
+
+	int i = 0;
 
 	SmashScoreboard::internalsInit();
-	SmashScoreboard::init("res/ImageCache/Smash Ultimate Full Art/_CharList.txt", renderer, loader, destRect);
+
+	std::thread initThread(SmashScoreboard::init, "res/ImageCache/Smash Ultimate Full Art/_CharList.txt", std::ref(window), threadContext);
+	//SmashScoreboard::init("res/ImageCache/Smash Ultimate Full Art/_CharList.txt", renderer, loader, destRect);
+
+	while (!SmashScoreboard::doneWithInit)
+	{
+		i++;
+		if (i >= 7)
+			i = 0;
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glUseProgram(shaderProgram);
+		
+		glBindTexture(GL_TEXTURE_2D, loader);
+		glBindVertexArray(headerRect);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		glBindTexture(GL_TEXTURE_2D, spinner_texs[i]);
+		glBindVertexArray(spinnerRect);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		SDL_GL_SwapWindow(window);
+
+		SDL_Delay(1000 / 20);
+	}
+
+	initThread.join();
+
+	SDL_GL_DeleteContext(threadContext);
 
 	//DESTROY RENDERER AND LOADER TEXTURES
 
 	SDL_DestroyRenderer(renderer);
-	SDL_FreeSurface(loader_surf);
-	SDL_DestroyTexture(loader);
 
 	//DONE NOW
 

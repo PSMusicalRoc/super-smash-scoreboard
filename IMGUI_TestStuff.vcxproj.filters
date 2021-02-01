@@ -65,6 +65,24 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\imconfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui_internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imstb_rectpack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imstb_textedit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imstb_truetype.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui.ini" />
@@ -92,6 +110,27 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\loader\loader.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\loader\spin_anim\frame-0.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\loader\spin_anim\frame-1.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\loader\spin_anim\frame-2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\loader\spin_anim\frame-3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\loader\spin_anim\frame-4.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\loader\spin_anim\frame-5.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\loader\spin_anim\frame-6.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
