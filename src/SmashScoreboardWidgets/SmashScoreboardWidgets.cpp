@@ -1,6 +1,12 @@
 #include <SmashScoreboardFunctions.h>
 #include <SmashScoreboardWidgets.h>
 
+#ifdef _WIN32
+	#include <Windows.h>
+	#pragma push_macro("CreateWindow")
+	#undef CreateWindow
+#endif
+
 namespace fs = std::filesystem;
 
 //Set the UNIQUE IDENTIFIER before any new windows
@@ -126,19 +132,22 @@ void SmashScoreboard::DialogWindow::perframe()
 {
 	if (this->isVisible)
 	{
+		ImGui::OpenPopup(this->dialogTitle.c_str(), ImGuiPopupFlags_AnyPopupLevel);
+
 		ImGui::StyleColorsLight();
 		ImGui::SetNextWindowSize(ImVec2(-1, -1), ImGuiCond_Always);
 
-		ImGui::Begin((this->dialogTitle + "###" + this->dialogTitle).c_str(), &this->isVisible, ImGuiWindowFlags_NoResize);
-
-		if (this->iconImg != 0)
+		if (ImGui::BeginPopupModal((this->dialogTitle).c_str(), &this->isVisible))
 		{
-			ImGui::Image((void*)this->iconImg, ImVec2(64, 64));
-			ImGui::SameLine();
-		}
-		ImGui::Text(this->dialogContents.c_str());
+			if (this->iconImg != 0)
+			{
+				ImGui::Image((void*)this->iconImg, ImVec2(64, 64));
+				ImGui::SameLine();
+			}
+			ImGui::Text(this->dialogContents.c_str());
 
-		ImGui::End();
+			ImGui::EndPopup();
+		}
 	}
 }
 
@@ -161,10 +170,12 @@ void SmashScoreboard::OKCancelDialogWindow::perframe()
 {
 	if (this->isVisible)
 	{
+		ImGui::OpenPopup(this->dialogTitle.c_str(), ImGuiPopupFlags_AnyPopupLevel);
+
 		ImGui::StyleColorsLight();
 		ImGui::SetNextWindowSize(ImVec2(-1, -1), ImGuiCond_Always);
 
-		ImGui::Begin((this->dialogTitle + "###" + this->dialogTitle).c_str(), &this->isVisible, ImGuiWindowFlags_NoResize);
+		ImGui::BeginPopupModal(this->dialogTitle.c_str(), &this->isVisible);
 
 		if (this->iconImg != 0)
 		{
@@ -186,7 +197,7 @@ void SmashScoreboard::OKCancelDialogWindow::perframe()
 			this->isVisible = false;
 		}
 
-		ImGui::End();
+		ImGui::EndPopup();
 	}
 }
 
@@ -588,11 +599,11 @@ void SmashScoreboard::PlayerOneSelectWindow::perframe()
 							int imageNum = j - cname.indexLow + 1;
 
 							const auto copyOptions = fs::copy_options::overwrite_existing;
-							std::string topath = "Output/" + this->windowName + ".png";
+							std::string topath = "Output\\" + this->windowName + ".png";
 							fs::path to = topath;
-							std::string frompath = "res/ImageCache/Smash Ultimate Full Art/";
+							std::string frompath = "res\\ImageCache\\Smash Ultimate Full Art\\";
 							frompath += SmashScoreboard::characterList[i].text.c_str();
-							frompath += "/";
+							frompath += "\\";
 							frompath += SmashScoreboard::characterList[i].text.c_str();
 							if (imageNum < 10)
 								frompath += "_0" + std::to_string(imageNum);
@@ -600,8 +611,37 @@ void SmashScoreboard::PlayerOneSelectWindow::perframe()
 								frompath += "_" + std::to_string(imageNum);
 							frompath += ".png";
 							fs::path from = frompath;
-							std::cout << fs::copy_file(from, to, copyOptions) << std::endl;
-							std::cout << SmashScoreboard::characterList[i].text.c_str() << std::endl;
+							fs::copy_file(from, to, copyOptions);
+							
+							SYSTEMTIME currentSystemTime;
+							GetSystemTime(&currentSystemTime);
+
+							FILETIME modifiedfileTime;
+							SystemTimeToFileTime(&currentSystemTime, &modifiedfileTime);
+
+							char pathname[FILENAME_MAX];
+							GetCurrentDir(pathname, FILENAME_MAX);
+
+							std::string s_pathname = pathname;
+							if (s_pathname.back() != '\\')
+								s_pathname += '\\';
+
+							HANDLE winHandleFilename = CreateFileA((LPCSTR)(s_pathname + topath).c_str(),
+								FILE_GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+								NULL, OPEN_EXISTING,
+								FILE_ATTRIBUTE_NORMAL, NULL);
+
+							if (winHandleFilename == INVALID_HANDLE_VALUE)
+								std::cout << GetLastError() << std::endl;
+
+							BOOL b = SetFileTime(winHandleFilename, (LPFILETIME)NULL, (LPFILETIME)NULL, &modifiedfileTime);
+
+							CloseHandle(winHandleFilename);
+
+							if (!b)
+								std::cout << GetLastError() << std::endl;
+							else
+								std::cout << "OK" << std::endl;
 						}
 						WidthTakenUp += ImGui::GetItemRectSize().x;
 
@@ -883,3 +923,7 @@ bool SmashScoreboard::checkForTakenIdentifier(std::string ident)
 	}
 	return false;
 }
+
+#ifdef _WIN32
+#pragma pull_macro("CreateWindow")
+#endif

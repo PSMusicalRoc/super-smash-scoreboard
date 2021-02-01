@@ -162,8 +162,14 @@
     <ClCompile Include="src\SmashScoreboardWidgets\SmashScoreboardWidgets.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\imconfig.h" />
+    <ClInclude Include="include\imgui.h" />
     <ClInclude Include="include\imgui_impl_opengl3.h" />
     <ClInclude Include="include\imgui_impl_sdl.h" />
+    <ClInclude Include="include\imgui_internal.h" />
+    <ClInclude Include="include\imstb_rectpack.h" />
+    <ClInclude Include="include\imstb_textedit.h" />
+    <ClInclude Include="include\imstb_truetype.h" />
     <ClInclude Include="include\SmashScoreboardFunctions.h" />
     <ClInclude Include="include\SmashScoreboardWidgets.h" />
     <ClInclude Include="resource.h" />
@@ -186,6 +192,13 @@
     <Image Include="res\loader\background.png" />
     <Image Include="res\loader\icon.ico" />
     <Image Include="res\loader\loader.png" />
+    <Image Include="res\loader\spin_anim\frame-0.png" />
+    <Image Include="res\loader\spin_anim\frame-1.png" />
+    <Image Include="res\loader\spin_anim\frame-2.png" />
+    <Image Include="res\loader\spin_anim\frame-3.png" />
+    <Image Include="res\loader\spin_anim\frame-4.png" />
+    <Image Include="res\loader\spin_anim\frame-5.png" />
+    <Image Include="res\loader\spin_anim\frame-6.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

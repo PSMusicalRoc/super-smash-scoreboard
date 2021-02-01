@@ -28,7 +28,7 @@ namespace SmashScoreboard
 	extern GLuint Dialogs_Warning;
 
 	void internalsInit();
-	void init(const char* pathToList, SDL_Renderer *ren, SDL_Texture* loader, SDL_Rect& loaderrect);
+	void init(const char* pathToList, SDL_Window* win, SDL_GLContext context);
 
 	struct CharacterName
 	{
@@ -59,7 +59,7 @@ namespace SmashScoreboard
 	bool findSubstring(const char* w1, const char* w2);
 	bool findLowerSubstring(std::string str1, std::string str2);
 
-	GLuint LoadAndInitTex(const char* path, GLuint customID = 0);
+	GLuint LoadAndInitTex(const char* path, GLuint customID = 0, bool shouldCompress = true);
 
 	void uninit();
 }
