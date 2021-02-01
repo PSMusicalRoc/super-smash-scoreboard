@@ -81,7 +81,11 @@ namespace SmashScoreboard
 
 	public:
 		DialogWindow(std::string dialogTitle, std::string dialogContents, GLuint iconImg = 0);
-		~DialogWindow() { ISDIALOGOPEN = false; }
+		~DialogWindow()
+		{
+			ISDIALOGOPEN = false;
+			ImGui::CloseCurrentPopup();
+		}
 
 		static DialogWindow* CreateWindow(std::string dialogTitle, std::string dialogContents, GLuint iconImg = 0);
 
@@ -98,7 +102,11 @@ namespace SmashScoreboard
 
 	public:
 		OKCancelDialogWindow(std::string dialogTitle, std::string dialogContents, bool& flag, GLuint iconImg = 0);
-		~OKCancelDialogWindow() { ISDIALOGOPEN = false; }
+		~OKCancelDialogWindow()
+		{
+			ISDIALOGOPEN = false;
+			ImGui::CloseCurrentPopup();
+		}
 
 		static OKCancelDialogWindow* CreateWindow(std::string dialogTitle, std::string dialogContents, bool& flag, GLuint iconImg = 0);
 

@@ -40,8 +40,10 @@ void SmashScoreboard::internalsInit()
 		doneWithInit = true;
 }
 
-void SmashScoreboard::init(const char* pathToFile, SDL_Renderer* ren, SDL_Texture* loader, SDL_Rect& loaderrect)
+void SmashScoreboard::init(const char* pathToFile, SDL_Window* win, SDL_GLContext context)
 {
+	SDL_GL_MakeCurrent(win, context);
+
 	if (!doneWithInit)
 	{
 		std::fstream characterListFile;
@@ -64,21 +66,9 @@ void SmashScoreboard::init(const char* pathToFile, SDL_Renderer* ren, SDL_Textur
 				//texture is in textureList
 				int indexTex = 0;
 
-				SDL_Surface* surfs[7];
-				SDL_Texture* loading[7];
-
-				for (int j = 0; j < 7; j++)
-				{
-					surfs[j] = IMG_Load(("res/loader/spin_anim/frame-" + std::to_string(j) + ".png").c_str());
-					loading[j] = SDL_CreateTextureFromSurface(ren, surfs[j]);
-				}
-
 				for (int i = 0; i < characterList.size(); i++)
 				{
 					//Setup iterator variables
-
-					//Graphics iterator
-					int frameOfRotator = 0;
 
 					//Defines whether the program should run another
 					//loop to find the next image for a character
@@ -94,26 +84,6 @@ void SmashScoreboard::init(const char* pathToFile, SDL_Renderer* ren, SDL_Textur
 
 					//Store first texture index in the character class
 					characterList[i].indexLow = indexTex;
-
-					if (i % 5 == 0)
-					{
-						SDL_Rect spinnerRect;
-
-						frameOfRotator++;
-
-						if (frameOfRotator == 7)
-							frameOfRotator = 0;
-
-						spinnerRect.w = surfs[frameOfRotator]->w / 4;
-						spinnerRect.h = surfs[frameOfRotator]->h / 4;
-						spinnerRect.x = (SmashScoreboard::windowWidth - surfs[frameOfRotator]->w) / 2;
-						spinnerRect.y = SmashScoreboard::windowHeight - 100;
-
-						SDL_RenderClear(ren);
-						SDL_RenderCopy(ren, loader, NULL, &loaderrect);
-						SDL_RenderCopy(ren, loading[frameOfRotator], NULL, &spinnerRect);
-						SDL_RenderPresent(ren);
-					}
 
 					while (moreImages)
 					{
@@ -162,13 +132,6 @@ void SmashScoreboard::init(const char* pathToFile, SDL_Renderer* ren, SDL_Textur
 						else
 						{
 							moreImages = false;
-
-							for (int j = 0; j < 7; j++)
-							{
-
-								SDL_DestroyTexture(loading[j]);
-								SDL_FreeSurface(surfs[j]);
-							}
 						}
 					}
 
@@ -184,6 +147,22 @@ void SmashScoreboard::init(const char* pathToFile, SDL_Renderer* ren, SDL_Textur
 		{
 			initSuccessful = false;
 		}
+
+		//It is very important in shared contexts to make sure the driver is done with all Objects before signaling other threads that they can use them!
+		GLsync fenceId = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+		GLenum result;
+		while (true)
+		{
+			result = glClientWaitSync(fenceId, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(5000000000)); //5 Second timeout
+			if (result != GL_TIMEOUT_EXPIRED) break; //we ignore timeouts and wait until all OpenGL commands are processed!
+		}
+
+
+		//im not 100% sure what happens to a context that still is active when a thread gets closed.
+		//But you can't call SDL_GL_DeleteContext on it!
+		//So I just unbind it from this thread and call SDL_GL_DeleteContext in the main thread at closing.
+		SDL_GL_MakeCurrent(win, NULL);
+
 		doneWithInit = true;
 	}
 }
@@ -549,7 +528,7 @@ bool SmashScoreboard::findLowerSubstring(std::string str1, std::string str2)
 	return findSubstring(w1, w2);
 }
 
-GLuint SmashScoreboard::LoadAndInitTex(const char* path, GLuint customID)
+GLuint SmashScoreboard::LoadAndInitTex(const char* path, GLuint customID, bool shouldCompress)
 {
 	SDL_Surface* surf = IMG_Load(path);
 
@@ -573,9 +552,17 @@ GLuint SmashScoreboard::LoadAndInitTex(const char* path, GLuint customID)
 
 		int mode = GL_RGB;
 		if (surf->format->BytesPerPixel == 4)
+		{
 			mode = GL_RGBA;
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA, surf->w, surf->h, 0, mode, GL_UNSIGNED_BYTE, surf->pixels);
+		GLenum compression = GL_COMPRESSED_RGBA;
+		if (!shouldCompress)
+			compression = mode;
+
+		glTexImage2D(GL_TEXTURE_2D, 0, compression, surf->w, surf->h, 0, mode, GL_UNSIGNED_BYTE, surf->pixels);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
