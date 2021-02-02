@@ -90,6 +90,7 @@
     <None Include="README.md" />
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
+    <None Include="freetype.dll" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="res\font\ARLRDBD.TTF" />
@@ -133,5 +134,8 @@
     <Image Include="res\loader\spin_anim\frame-6.png">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lib\freetype.lib" />
   </ItemGroup>
 </Project>
