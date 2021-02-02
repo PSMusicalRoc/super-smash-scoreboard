@@ -9,18 +9,178 @@
 #else
 #endif
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl3.h>
 #include <glad/glad.h>
 #include <iostream>
 #include <fstream>
 #include <typeinfo>
+#include <map>
 #include <thread>
+#include <time.h>
 
 #include "SmashScoreboardFunctions.h"
 #include "SmashScoreboardWidgets.h"
 
+//Version semantics
+#define SSSBMAJOR 0
+#define SSSBMINOR 0
+#define SSSBMICRO 5
+#define SSSBNANO  0
+#define SSSBBETA  true
+
 namespace fs = std::filesystem;
+
+/**
+* Global variable to store the text's VBO because I need it for
+* renderWhiteText()
+*/
+GLuint TextVBO;
+
+/**
+* Real quick, we're gonna define a struct for the characters in
+* the font, so we can not only write good looking text, but also
+* center it horizontally on the screen
+*
+* Keep in mind that these textures will start at 500, and go until
+* about 630. You have been warned
+*/
+
+
+struct Character {
+	GLuint			TextureID;		//GLuint for the character
+	ImVec2			Size;			//Size of the character
+	ImVec2			Bearing;		//Offset from the baseline to the top/left of the character
+	unsigned int	Advance;		//Offset to advance to next glyph
+};
+
+std::map<char, Character> Characters;
+
+/**
+* Quick helper function to translate from screen space
+* to the more cartesian plane that OpenGL uses for its
+* screen viewport
+*/
+void CoordsToOpenGL(double& width , double& height, bool absVal = false)
+{
+	width = (width / SmashScoreboard::windowWidth);
+	/*if (width < .5)
+		width = -.5 + width;
+	else
+		width = (width - .5);*/
+	width = (width -.5) * 2;
+	if (absVal)
+		width = abs(width);
+
+	height = (height / SmashScoreboard::windowHeight);
+	/*if (height < .5)
+		height = -height;
+	else
+		height = (height - .5) / 2;
+	height *= 2;*/
+	height = (height - .5) * 2;
+	if (absVal)
+		height = abs(height);
+}
+
+/**
+* Basically just doesn't make the local coordinates ig
+*/
+void SizeToOpenGL(double& width, double& height)
+{
+	width = width / (SmashScoreboard::windowWidth / 2);
+	height = height / (SmashScoreboard::windowHeight / 2);
+}
+
+
+/**
+* Before calling this function, set the program to use
+* the shader that renders to completely white text, as
+* well as binding the text VAO (should be gluint 496)
+* 
+* In this function, we will be binding the VBO a lot,
+* so this comment strives to remind you that the VBO
+* has a GLuint of 498. It should be binded before using
+* this function.
+* 
+* The height value is based on the window height. The origin
+* is the bottom left. Basically, height is how high off the
+* baseline you want to be (ie. 60 = 60 px)
+*/
+void renderWhiteText(std::string text, unsigned int height)
+{
+	std::string::const_iterator c;
+
+	//This is updated with the width of the overall string
+	int overallWidth = 0.0;
+
+	//This holds the starting x value of the string. It will
+	//be set on the first trip around, but if this fails for
+	//whatever reason, it should default to 0
+	double starting_x = 0.0;
+
+	//This, like x, will be set after the first trip around, but
+	//is instead based on user input to the function
+	double starting_y = 0.0;
+
+	for (c = text.begin(); c != text.end(); c++)
+	{
+		Character ch = Characters[*c];
+		overallWidth += (ch.Advance >> 6);
+	}
+
+	//Calculate starting x value and y value
+	starting_x = (SmashScoreboard::windowWidth - overallWidth) / 2;
+	starting_y = height;
+
+	CoordsToOpenGL(starting_x, starting_y);
+
+	for (c = text.begin(); c != text.end(); c++)
+	{
+		Character ch = Characters[*c];
+		
+		double xpos = ch.Bearing.x;
+		double ypos = (double)ch.Size.y - (double)ch.Bearing.y;
+
+		SizeToOpenGL(xpos, ypos);
+		xpos = starting_x + xpos;
+		ypos = starting_y - ypos;
+
+		double w = ch.Size.x;
+		double h = ch.Size.y;
+		SizeToOpenGL(w, h);
+
+		//Update VBO for each character
+		float verticies[6][4] = {
+			{ xpos,		ypos + h,	0.0f, 0.0f },
+			{ xpos,     ypos,       0.0f, 1.0f },
+			{ xpos + w, ypos,       1.0f, 1.0f },
+
+			{ xpos,     ypos + h,   0.0f, 0.0f },
+			{ xpos + w, ypos,       1.0f, 1.0f },
+			{ xpos + w, ypos + h,   1.0f, 0.0f }
+		};
+
+		//render that shizz
+		glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+		glBindBuffer(GL_ARRAY_BUFFER, TextVBO);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(verticies), verticies);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		
+		double increment = ch.Advance >> 6;
+		double dummy = 0;
+		SizeToOpenGL(increment, dummy);
+		starting_x += increment;
+	}
+	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -42,7 +202,17 @@ int main(int argc, char* argv[])
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	SDL_Window* window = SDL_CreateWindow("Smash Scoreboard I dunno",
+	std::string winTitle = "Smash Scoreboard "
+		+ std::to_string(SSSBMAJOR) + "."
+		+ std::to_string(SSSBMINOR) + "."
+		+ std::to_string(SSSBMICRO);
+	
+	if (SSSBNANO)
+		winTitle += "." + std::to_string(SSSBNANO);
+	if (SSSBBETA)
+		winTitle += "b";
+
+	SDL_Window* window = SDL_CreateWindow(winTitle.c_str(),
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		SmashScoreboard::windowWidth, SmashScoreboard::windowHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 
@@ -76,7 +246,205 @@ int main(int argc, char* argv[])
 	std::cout << "Current GL Version: " << glGetString(GL_VERSION) << std::endl;
 	
 	glClearColor(0, 0, 0, 255);
+
+
+
+	/*
+	* Initializing the FT2 Library
+	* 
+	* This library is likely only going to be used for the loading screen
+	* function, however it has a massive user experience boost if
+	* implemented
+	*/
+
+	FT_Library library;
+	FT_Error error;
+
+	error = FT_Init_FreeType(&library);
+	if (error)
+	{
+		std::cout << "An error has occured during the loading of FreeType2!" << std::endl;
+		std::cout << "Error Code " << error << std::endl;
+		return -1;
+	}
+
+	FT_Face arial_font_face;
+
+	error = FT_New_Face(library, "res/font/ARLRDBD.TTF", 0, &arial_font_face);
+	if (error == FT_Err_Unknown_File_Format)
+	{
+		std::cout << "An error has occured during the loading of FreeType2!" << std::endl;
+		std::cout << "It seems that the font face is readable, but not of the correct type" << std::endl;
+		std::cout << "Is the font face supported by FT2?" << std::endl;
+		return -1;
+	}
+	else if (error)
+	{
+		std::cout << "An error has occured during the loading of FreeType2!" << std::endl;
+		std::cout << "It seems that the font face is unreadable... is it broken?" << std::endl;
+		return -1;
+	}
+
+	error = FT_Set_Pixel_Sizes(arial_font_face, 0, 18);
+	if (error)
+	{
+		std::cout << "Error setting pixel size, this is weird..." << std::endl;
+		return -1;
+	}
+
+	/**
+	* Load the glyphs into the Characters map
+	*/
+
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	GLuint texture = 500;
 	
+	for (unsigned char c = 0; c < 128; c++)
+	{
+		//load that glyph
+		if (FT_Load_Char(arial_font_face, c, FT_LOAD_RENDER))
+		{
+			std::cout << "Didn't load glyph " << char(c) << std::endl;
+			continue;
+		}
+
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			GL_RED,
+			arial_font_face->glyph->bitmap.width,
+			arial_font_face->glyph->bitmap.rows,
+			0,
+			GL_RED,
+			GL_UNSIGNED_BYTE,
+			arial_font_face->glyph->bitmap.buffer
+		);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		//store that glyph
+		Character character = {
+			texture,
+			ImVec2(arial_font_face->glyph->bitmap.width, arial_font_face->glyph->bitmap.rows),
+			ImVec2(arial_font_face->glyph->bitmap_left, arial_font_face->glyph->bitmap_top),
+			arial_font_face->glyph->advance.x
+		};
+		Characters.insert(std::pair<char, Character>(c, character));
+
+		texture++;
+	}
+
+	FT_Done_Face(arial_font_face);
+	FT_Done_FreeType(library);
+
+
+
+
+	/**
+	* Defining the VAO/VBO for the text
+	*/
+
+	GLuint TextVAO = 496;
+	glGenVertexArrays(1, &TextVAO);
+	glBindVertexArray(TextVAO);
+
+
+	TextVBO = 498;
+	glGenBuffers(1, &TextVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, TextVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+	
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+
+
+
+	/**
+	* Alrighty, now we get to define the charaacter shaders
+	*/
+
+	const char* textvertexShaderSource = "#version 330 core\n"
+		"layout(location = 0) in vec4 vertex; // <vec2 pos, vec2 tex>\n"
+		"out vec2 TexCoords;\n\n"
+		"void main()\n"
+		"{\n"
+		"	gl_Position = vec4(vertex.xy, 0.0, 1.0);\n"
+		"	TexCoords = vertex.zw;\n"
+		"}";
+
+	GLuint textvertexShader;
+	textvertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(textvertexShader, 1, &textvertexShaderSource, NULL);
+	glCompileShader(textvertexShader);
+
+	int  success;
+	char infoLog[512];
+	glGetShaderiv(textvertexShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(textvertexShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+
+	//Frag Shader
+
+	const char* textfragmentShaderSource = "#version 330 core\n"
+		"in vec2 TexCoords;\n"
+		"out vec4 color;\n"
+		"uniform sampler2D text;\n"
+		"void main()\n"
+		"{\n"
+		"vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);\n"
+		"color = vec4(1.0, 1.0, 1.0, 1.0) * sampled;\n"
+		"}";
+	GLuint textfragmentShader;
+	textfragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(textfragmentShader, 1, &textfragmentShaderSource, NULL);
+	glCompileShader(textfragmentShader);
+
+	glGetShaderiv(textfragmentShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(textfragmentShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+
+	//Shader Program
+
+	GLuint textShaderProgram;
+	textShaderProgram = glCreateProgram();
+
+	glAttachShader(textShaderProgram, textvertexShader);
+	glAttachShader(textShaderProgram, textfragmentShader);
+	glLinkProgram(textShaderProgram);
+
+	glGetProgramiv(textShaderProgram, GL_LINK_STATUS, &success);
+	if (!success)
+	{
+		glGetProgramInfoLog(textShaderProgram, 512, NULL, infoLog);
+		std::cout << "ERROR::PROGRAM::LINK_FAILED\n" << infoLog << std::endl;
+	}
+
+	glDeleteShader(textvertexShader);
+	glDeleteShader(textfragmentShader);
+
+	glUseProgram(textShaderProgram);
+
+
+
+
 	bool shouldBeRunning = true;
 	SDL_Event event;
 
@@ -169,8 +537,6 @@ int main(int argc, char* argv[])
 	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
 	glCompileShader(vertexShader);
 
-	int  success;
-	char infoLog[512];
 	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
@@ -228,8 +594,20 @@ int main(int argc, char* argv[])
 	std::thread initThread(SmashScoreboard::init, "res/ImageCache/Smash Ultimate Full Art/_CharList.txt", std::ref(window), threadContext);
 	//SmashScoreboard::init("res/ImageCache/Smash Ultimate Full Art/_CharList.txt", renderer, loader, destRect);
 
+	clock_t time_started;
+	clock_t time_to_delay;
+	
 	while (!SmashScoreboard::doneWithInit)
 	{
+		time_started = clock();
+
+		while (SDL_PollEvent(&event))
+		{
+			switch (event.type)
+			{
+			}
+		}
+
 		i++;
 		if (i >= 7)
 			i = 0;
@@ -246,9 +624,19 @@ int main(int argc, char* argv[])
 		glBindVertexArray(spinnerRect);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
+		glUseProgram(textShaderProgram);
+		glBindVertexArray(TextVAO);
+		std::string textToRender = SmashScoreboard::processMessage;
+		renderWhiteText(textToRender, 150);
+
 		SDL_GL_SwapWindow(window);
 
-		SDL_Delay(1000 / 20);
+		time_to_delay = clock() - time_started;
+		time_to_delay = (1000 / 20) - time_to_delay;
+		if (time_to_delay <= 0)
+			time_to_delay = 0;
+
+		SDL_Delay(time_to_delay);
 	}
 
 	initThread.join();
@@ -422,6 +810,10 @@ int main(int argc, char* argv[])
 					}
 				}
 				win->perframe();
+#ifndef NDEBUG
+				ImGui::StyleColorsLight();
+				ImGui::ShowDemoWindow();
+#endif
 				auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
 				backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
 					SmashScoreboard::windowHeight), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
