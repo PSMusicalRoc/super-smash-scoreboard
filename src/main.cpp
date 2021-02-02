@@ -28,8 +28,8 @@
 //Version semantics
 #define SSSBMAJOR 0
 #define SSSBMINOR 0
-#define SSSBMICRO 4
-#define SSSBNANO  2
+#define SSSBMICRO 5
+#define SSSBNANO  0
 #define SSSBBETA  true
 
 namespace fs = std::filesystem;
