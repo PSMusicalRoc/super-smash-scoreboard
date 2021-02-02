@@ -13,6 +13,8 @@ GLuint SmashScoreboard::FileSelect_File = 0;
 GLuint SmashScoreboard::Dialogs_OK = 0;
 GLuint SmashScoreboard::Dialogs_Warning = 0;
 
+std::string SmashScoreboard::processMessage = "Loading Internals...";
+
 SmashScoreboard::CharacterName::CharacterName(std::string str)
 	:text(str) {}
 
@@ -85,6 +87,10 @@ void SmashScoreboard::init(const char* pathToFile, SDL_Window* win, SDL_GLContex
 					//Store first texture index in the character class
 					characterList[i].indexLow = indexTex;
 
+					//Set the process message string to the current
+					//character being loaded
+					processMessage = "Loading " + characterList[i].text;
+
 					while (moreImages)
 					{
 						//Currently hard limit at 99 images per character
@@ -147,6 +153,8 @@ void SmashScoreboard::init(const char* pathToFile, SDL_Window* win, SDL_GLContex
 		{
 			initSuccessful = false;
 		}
+
+		processMessage = "Finishing init...";
 
 		//It is very important in shared contexts to make sure the driver is done with all Objects before signaling other threads that they can use them!
 		GLsync fenceId = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);

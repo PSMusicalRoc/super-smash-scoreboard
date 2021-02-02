@@ -27,6 +27,8 @@ namespace SmashScoreboard
 	extern GLuint Dialogs_OK;
 	extern GLuint Dialogs_Warning;
 
+	extern std::string processMessage;
+
 	void internalsInit();
 	void init(const char* pathToList, SDL_Window* win, SDL_GLContext context);
 
