@@ -422,6 +422,10 @@ int main(int argc, char* argv[])
 					}
 				}
 				win->perframe();
+#ifndef NDEBUG
+				ImGui::StyleColorsLight();
+				ImGui::ShowDemoWindow();
+#endif
 				auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
 				backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
 					SmashScoreboard::windowHeight), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
