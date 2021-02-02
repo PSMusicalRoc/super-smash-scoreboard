@@ -25,6 +25,13 @@
 #include "SmashScoreboardFunctions.h"
 #include "SmashScoreboardWidgets.h"
 
+//Version semantics
+#define SSSBMAJOR 0
+#define SSSBMINOR 0
+#define SSSBMICRO 4
+#define SSSBNANO  2
+#define SSSBBETA  true
+
 namespace fs = std::filesystem;
 
 /**
@@ -195,7 +202,17 @@ int main(int argc, char* argv[])
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	SDL_Window* window = SDL_CreateWindow("Smash Scoreboard I dunno",
+	std::string winTitle = "Smash Scoreboard "
+		+ std::to_string(SSSBMAJOR) + "."
+		+ std::to_string(SSSBMINOR) + "."
+		+ std::to_string(SSSBMICRO);
+	
+	if (SSSBNANO)
+		winTitle += "." + std::to_string(SSSBNANO);
+	if (SSSBBETA)
+		winTitle += "b";
+
+	SDL_Window* window = SDL_CreateWindow(winTitle.c_str(),
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		SmashScoreboard::windowWidth, SmashScoreboard::windowHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 
