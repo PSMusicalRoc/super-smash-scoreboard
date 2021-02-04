@@ -1,4 +1,7 @@
 #include <SmashScoreboardFunctions.h>
+#include <iostream>
+
+namespace fs = std::filesystem;
 
 std::vector<SmashScoreboard::CharacterName> SmashScoreboard::characterList;
 std::vector<GLuint> SmashScoreboard::textureList;
@@ -42,137 +45,157 @@ void SmashScoreboard::internalsInit()
 		doneWithInit = true;
 }
 
-void SmashScoreboard::init(const char* pathToFile, SDL_Window* win, SDL_GLContext context)
+void SmashScoreboard::init(std::string dirPath, SDL_Window* win, SDL_GLContext context)
 {
 	SDL_GL_MakeCurrent(win, context);
 
 	if (!doneWithInit)
 	{
-		std::fstream characterListFile;
-		characterListFile.open(pathToFile, std::ios::in);
-		if (characterListFile.is_open())
+		/*std::string line;
+		while (std::getline(characterListFile, line))
 		{
-			std::string line;
-			while (std::getline(characterListFile, line))
-			{
-				characterList.push_back(CharacterName(line));
-			}
+			characterList.push_back(CharacterName(line));
+		}*/
 
-			if (characterList.size() == 0)
+		for (const auto directory : fs::directory_iterator(dirPath))
+		{
+			if (directory.is_directory())
 			{
-				initSuccessful = false;
-			}
-			else
-			{
-				//Overall counter defining what the position of the
-				//texture is in textureList
-				int indexTex = 0;
-
-				for (int i = 0; i < characterList.size(); i++)
+				std::string name = directory.path().string();
+				//check if has slash at end
+				//if yes, remove, if no, check for first instance of back or forward slash
+				//then remove the slash and all before it
+				if (name.back() == '\\')
 				{
-					//Setup iterator variables
-
-					//Defines whether the program should run another
-					//loop to find the next image for a character
-					bool moreImages = true;
-
-					//Counts the current image number the character
-					//is on
-					int numImages = 1;
-
-					//Stores whether or not the character has had an
-					//image loaded yet
-					bool hasImageLoadedYet = false;
-
-					//Store first texture index in the character class
-					characterList[i].indexLow = indexTex;
-
-					//Set the process message string to the current
-					//character being loaded
-					processMessage = "Loading " + characterList[i].text;
-
-					while (moreImages)
-					{
-						//Currently hard limit at 99 images per character
-						if (numImages < 99)
-						{
-							//Generates a path for the next image to be loaded from
-							std::string path("res/ImageCache/Smash Ultimate Full Art/");
-							path += characterList[i].text;
-							path += "/";
-							path += characterList[i].text;
-							if (numImages < 10)
-								path += "_0" + std::to_string(numImages);
-							else if (10 <= numImages)
-								path += "_" + std::to_string(numImages);
-							path += ".png";
-
-
-							//Generates a GLuint for the texture and checks if
-							//the texture is NULL (i.e. an error)
-							GLuint loadedImage = LoadAndInitTex(path.c_str());
-							if (loadedImage != NULL)
-							{
-								textureList.push_back(loadedImage);
-
-								numImages += 1;
-								indexTex += 1;
-								hasImageLoadedYet = true;
-							}
-							//If NULL, then no more character images to load
-							else
-							{
-								moreImages = false;
-								if (hasImageLoadedYet)
-									numImages -= 1;
-								else
-								{
-									std::vector<CharacterName>::iterator charToRemove = characterList.begin() + i;
-
-									characterList.erase(charToRemove);
-									i--;
-								}
-							}
-						}
-						//If num > 99, then no more character images
-						else
-						{
-							moreImages = false;
-						}
-					}
-
-					//Sets the number of images for this
-					//character slot
-					if (hasImageLoadedYet)
-						characterList[i].numImages = numImages;
+					name.erase(name.rfind('\\'));
 				}
-				initSuccessful = true;
+				else if (name.back() == '/')
+				{
+					name.erase(name.rfind('/'));
+				}
+
+				name.erase(0, name.rfind('\\') + 1);
+
+				//std::cout << name << std::endl;
+
+				characterList.push_back(CharacterName(name));
 			}
 		}
-		else
+
+		if (characterList.size() == 0)
 		{
 			initSuccessful = false;
 		}
-
-		processMessage = "Finishing init...";
-
-		//It is very important in shared contexts to make sure the driver is done with all Objects before signaling other threads that they can use them!
-		GLsync fenceId = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-		GLenum result;
-		while (true)
+		else
 		{
-			result = glClientWaitSync(fenceId, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(5000000000)); //5 Second timeout
-			if (result != GL_TIMEOUT_EXPIRED) break; //we ignore timeouts and wait until all OpenGL commands are processed!
+			//Overall counter defining what the position of the
+			//texture is in textureList
+			int indexTex = 0;
+
+			for (int i = 0; i < characterList.size(); i++)
+			{
+				//Setup iterator variables
+
+				//Defines whether the program should run another
+				//loop to find the next image for a character
+				bool moreImages = true;
+
+				//Counts the current image number the character
+				//is on
+				int numImages = 1;
+
+				//Stores whether or not the character has had an
+				//image loaded yet
+				bool hasImageLoadedYet = false;
+
+				//Store first texture index in the character class
+				characterList[i].indexLow = indexTex;
+
+				//Set the process message string to the current
+				//character being loaded
+				processMessage = "Loading " + characterList[i].text;
+
+				while (moreImages)
+				{
+					//Currently hard limit at 99 images per character
+					if (numImages < 99)
+					{
+						//Generates a path for the next image to be loaded from
+						std::string path(dirPath);
+						path += characterList[i].text;
+						path += "\\";
+						path += characterList[i].text;
+						if (numImages < 10)
+							path += "_0" + std::to_string(numImages);
+						else if (10 <= numImages)
+							path += "_" + std::to_string(numImages);
+						path += ".png";
+
+
+						//Generates a GLuint for the texture and checks if
+						//the texture is NULL (i.e. an error)
+						GLuint loadedImage = LoadAndInitTex(path.c_str());
+						if (loadedImage != NULL)
+						{
+							textureList.push_back(loadedImage);
+
+							numImages += 1;
+							indexTex += 1;
+							hasImageLoadedYet = true;
+						}
+						//If NULL, then no more character images to load
+						else
+						{
+							moreImages = false;
+							if (hasImageLoadedYet)
+								numImages -= 1;
+							else
+							{
+								std::vector<CharacterName>::iterator charToRemove = characterList.begin() + i;
+
+								characterList.erase(charToRemove);
+								i--;
+							}
+						}
+					}
+					//If num > 99, then no more character images
+					else
+					{
+						moreImages = false;
+					}
+				}
+
+				//Sets the number of images for this
+				//character slot
+				if (hasImageLoadedYet)
+					characterList[i].numImages = numImages;
+			}
+			initSuccessful = true;
 		}
-
-
-		//im not 100% sure what happens to a context that still is active when a thread gets closed.
-		//But you can't call SDL_GL_DeleteContext on it!
-		//So I just unbind it from this thread and call SDL_GL_DeleteContext in the main thread at closing.
-		SDL_GL_MakeCurrent(win, NULL);
-
-		doneWithInit = true;
 	}
+	else
+	{
+		initSuccessful = false;
+	}
+
+	processMessage = "Finishing init...";
+
+	//It is very important in shared contexts to make sure the driver is done with all Objects before signaling other threads that they can use them!
+	GLsync fenceId = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+	GLenum result;
+	while (true)
+	{
+		result = glClientWaitSync(fenceId, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(5000000000)); //5 Second timeout
+		if (result != GL_TIMEOUT_EXPIRED) break; //we ignore timeouts and wait until all OpenGL commands are processed!
+	}
+
+
+	//im not 100% sure what happens to a context that still is active when a thread gets closed.
+	//But you can't call SDL_GL_DeleteContext on it!
+	//So I just unbind it from this thread and call SDL_GL_DeleteContext in the main thread at closing.
+	SDL_GL_MakeCurrent(win, NULL);
+
+	doneWithInit = true;
 }
 
 void SmashScoreboard::StyleColorsRed(ImGuiStyle* dst)

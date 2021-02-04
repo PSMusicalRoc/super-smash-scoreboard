@@ -32,6 +32,8 @@
 #define SSSBNANO  0
 #define SSSBBETA  true
 
+#define IMGBASEDIR "res/ImageCache"
+
 namespace fs = std::filesystem;
 
 /**
@@ -67,20 +69,11 @@ std::map<char, Character> Characters;
 void CoordsToOpenGL(double& width , double& height, bool absVal = false)
 {
 	width = (width / SmashScoreboard::windowWidth);
-	/*if (width < .5)
-		width = -.5 + width;
-	else
-		width = (width - .5);*/
 	width = (width -.5) * 2;
 	if (absVal)
 		width = abs(width);
 
 	height = (height / SmashScoreboard::windowHeight);
-	/*if (height < .5)
-		height = -height;
-	else
-		height = (height - .5) / 2;
-	height *= 2;*/
 	height = (height - .5) * 2;
 	if (absVal)
 		height = abs(height);
@@ -225,14 +218,6 @@ int main(int argc, char* argv[])
 	SDL_SetWindowIcon(window, winicon);
 	SDL_FreeSurface(winicon);
 
-	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
-	if (renderer == NULL)
-	{
-		std::cout << "Error in SDL_CreateRenderer(): " << SDL_GetError() << std::endl;
-		return -1;
-	}
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-
 	//Create OPENGL Context for ImGui
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 
@@ -246,6 +231,140 @@ int main(int argc, char* argv[])
 	std::cout << "Current GL Version: " << glGetString(GL_VERSION) << std::endl;
 	
 	glClearColor(0, 0, 0, 255);
+
+
+
+	/**
+	* ALRIGHT, TIME TO IMPLEMENT SOME CUSTOMIZABILITY
+	* 
+	* This should open an ImGuiWindow that has a radiobutton
+	* allowing the user to choose a folder from the res/imgcache folder
+	* to load into memory and use. At this point, the only way
+	* to change these sets out are by restarting the program.
+	*/
+	//SETUP IMGUI
+
+	//SETUP DEAR IMGUI CONTEXT
+	IMGUI_CHECKVERSION();
+	ImGuiContext* tempContext =  ImGui::CreateContext();
+	ImGuiIO& init_io = ImGui::GetIO();
+
+	//ImFont* font = io.Fonts->AddFontDefault();
+	ImFont* init_arial = init_io.Fonts->AddFontFromFileTTF("res/font/ARLRDBD.ttf", 18);
+	init_io.Fonts->Build();
+
+	SDL_Event init_event;
+	bool doneWithSetPath = false;
+	bool shouldClose = false;
+
+	int selection = 0;
+
+	std::vector<std::string> DirectoriesInPath;
+	std::vector<std::string> DirectoriesDisplay;
+	std::string ChosenPath;
+
+	//SETUP PLATFORM/RENDERER BINDINGS
+	ImGui_ImplSDL2_InitForOpenGL(window, context);
+	ImGui_ImplOpenGL3_Init();
+
+	while (!doneWithSetPath)
+	{
+		while (SDL_PollEvent(&init_event))
+		{
+			switch (init_event.type)
+			{
+			case SDL_QUIT:
+				doneWithSetPath = true;
+				shouldClose = true;
+				break;
+			case SDL_WINDOWEVENT:
+				switch (init_event.window.event) {
+				case SDL_WINDOWEVENT_SIZE_CHANGED:
+					SmashScoreboard::windowWidth = init_event.window.data1;
+					SmashScoreboard::windowHeight = init_event.window.data2;
+					break;
+				}
+			}
+
+			ImGui_ImplSDL2_ProcessEvent(&init_event);
+		}
+
+		ImGui_ImplSDL2_NewFrame(window);
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui::NewFrame();
+
+		ImGui::StyleColorsLight();
+#ifndef NDEBUG
+		ImGui::ShowDemoWindow();
+#endif
+
+		DirectoriesInPath.clear();
+		DirectoriesDisplay.clear();
+
+		for (const auto& entry : fs::directory_iterator(IMGBASEDIR))
+		{
+			if (entry.is_directory())
+			{
+				std::string path = entry.path().string();
+				DirectoriesInPath.push_back(path);
+
+				std::string name = path;
+				//We add one to compensate for the slash
+				name.erase(0, std::string(IMGBASEDIR).size() + 1);
+				DirectoriesDisplay.push_back(name);
+			}
+		}
+
+		ImGui::Begin("Choose Image Set", (bool*)0, ImGuiColumnsFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+
+		int i = 0;
+		//ImGui::RadioButton("##Choice", true);
+		for (std::string disp : DirectoriesDisplay)
+		{
+			ImGui::RadioButton(disp.c_str(), &selection, i);
+			i++;
+		}
+
+		ImGui::Separator();
+
+		if (ImGui::Button("Load!"))
+		{
+			doneWithSetPath = true;
+		}
+
+		ImGui::End();
+
+		ImGui::EndFrame();
+
+		ImGui::Render();
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		SDL_GL_SwapWindow(window);
+	}
+
+	ImGui_ImplSDL2_Shutdown();
+	ImGui_ImplOpenGL3_Shutdown();
+
+	ImGui::DestroyContext(tempContext);
+
+	std::string DirectoryToLoad = DirectoriesInPath[selection];
+	if (DirectoryToLoad.back() != '/' and DirectoryToLoad.back() != '\\')
+	{
+		DirectoryToLoad += '\\';
+	}
+
+	if (shouldClose)
+	{
+		SmashScoreboard::uninit();
+
+		SDL_DestroyWindow(window);
+		SDL_GL_DeleteContext(threadContext);
+		SDL_GL_DeleteContext(context);
+
+		return 0;
+	}
 
 
 
@@ -591,8 +710,7 @@ int main(int argc, char* argv[])
 
 	SmashScoreboard::internalsInit();
 
-	std::thread initThread(SmashScoreboard::init, "res/ImageCache/Smash Ultimate Full Art/_CharList.txt", std::ref(window), threadContext);
-	//SmashScoreboard::init("res/ImageCache/Smash Ultimate Full Art/_CharList.txt", renderer, loader, destRect);
+	std::thread initThread(SmashScoreboard::init, DirectoryToLoad, std::ref(window), threadContext);
 
 	clock_t time_started;
 	clock_t time_to_delay;
@@ -642,10 +760,6 @@ int main(int argc, char* argv[])
 	initThread.join();
 
 	SDL_GL_DeleteContext(threadContext);
-
-	//DESTROY RENDERER AND LOADER TEXTURES
-
-	SDL_DestroyRenderer(renderer);
 
 	//DONE NOW
 

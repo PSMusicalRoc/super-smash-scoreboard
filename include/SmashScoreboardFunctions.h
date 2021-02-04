@@ -10,6 +10,7 @@
 #include <string>
 #include <algorithm>
 #include <fstream>
+#include <filesystem>
 //#include <iostream>
 
 namespace SmashScoreboard
@@ -30,7 +31,7 @@ namespace SmashScoreboard
 	extern std::string processMessage;
 
 	void internalsInit();
-	void init(const char* pathToList, SDL_Window* win, SDL_GLContext context);
+	void init(std::string dirPath, SDL_Window* win, SDL_GLContext context);
 
 	struct CharacterName
 	{
