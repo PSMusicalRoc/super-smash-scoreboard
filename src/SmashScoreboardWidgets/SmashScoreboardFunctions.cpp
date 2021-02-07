@@ -16,6 +16,8 @@ GLuint SmashScoreboard::FileSelect_File = 0;
 GLuint SmashScoreboard::Dialogs_OK = 0;
 GLuint SmashScoreboard::Dialogs_Warning = 0;
 
+std::string SmashScoreboard::resPath;
+
 std::string SmashScoreboard::processMessage = "Loading Internals...";
 
 SmashScoreboard::CharacterName::CharacterName(std::string str)
@@ -51,6 +53,7 @@ void SmashScoreboard::init(std::string dirPath, SDL_Window* win, SDL_GLContext c
 
 	if (!doneWithInit)
 	{
+		SmashScoreboard::resPath = dirPath;
 		/*std::string line;
 		while (std::getline(characterListFile, line))
 		{

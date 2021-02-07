@@ -601,7 +601,7 @@ void SmashScoreboard::PlayerOneSelectWindow::perframe()
 							const auto copyOptions = fs::copy_options::overwrite_existing;
 							std::string topath = "Output\\" + this->windowName + ".png";
 							fs::path to = topath;
-							std::string frompath = "res\\ImageCache\\Smash Ultimate Full Art\\";
+							std::string frompath = SmashScoreboard::resPath;
 							frompath += SmashScoreboard::characterList[i].text.c_str();
 							frompath += "\\";
 							frompath += SmashScoreboard::characterList[i].text.c_str();
