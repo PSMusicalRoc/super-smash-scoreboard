@@ -655,15 +655,31 @@ int main(int argc, char* argv[])
 		spinner_texs[i] = SmashScoreboard::LoadAndInitTex(("res/loader/spin_anim/frame-" + std::to_string(i) + ".png").c_str(), 0, false);
 	}
 
+	double spinner_xpos = (SmashScoreboard::windowWidth / 2) - 50;
+	double spinner_ypos = (SmashScoreboard::windowHeight / 2) - 50;
+
+	double spinner_widthlength = 100;
+	double spinner_heightlength = 100;
+
+	CoordsToOpenGL(spinner_xpos, spinner_ypos);
+	SizeToOpenGL(spinner_widthlength, spinner_heightlength);
+
+#ifndef NDEBUG
+	std::cout << "Spinner_XPOS: " << spinner_xpos << std::endl;
+	std::cout << "Spinner_YPOS: " << spinner_ypos << std::endl;
+	std::cout << "Spinner_widthlength: " << spinner_widthlength << std::endl;
+	std::cout << "Spinner_heightlength: " << spinner_heightlength << std::endl;
+#endif
+
 	GLfloat spinnerRect_verts[] = {
 		
-		//positions			//texture coords
-		-0.05,	-0.25,		0.0,	0.0,
-		0.05,	-0.25,		1.0,	0.0,
-		0.05,	-0.35,		1.0,	1.0,
-		0.05,	-0.35,		1.0,	1.0,
-		-0.05,	-0.35,		0.0,	1.0,
-		-0.05,	-0.25,		0.0,	0.0,
+		//positions																	//texture coords
+		spinner_xpos,						spinner_ypos,							0.0,	0.0,
+		spinner_xpos + spinner_widthlength,	spinner_ypos,							1.0,	0.0,
+		spinner_xpos + spinner_widthlength,	spinner_ypos - spinner_heightlength,	1.0,	1.0,
+		spinner_xpos + spinner_widthlength,	spinner_ypos - spinner_heightlength,	1.0,	1.0,
+		spinner_xpos,						spinner_ypos - spinner_heightlength,	0.0,	1.0,
+		spinner_xpos,						spinner_ypos,							0.0,	0.0,
 	};
 
 	GLuint spinnerRect = 12;
