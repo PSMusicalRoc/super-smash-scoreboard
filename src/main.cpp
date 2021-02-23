@@ -22,6 +22,8 @@
 #include <thread>
 #include <time.h>
 
+#include <ImFileDialog.h>
+
 #include "SmashScoreboardFunctions.h"
 #include "SmashScoreboardWidgets.h"
 
@@ -252,6 +254,49 @@ int main(int argc, char* argv[])
 	//ImFont* font = io.Fonts->AddFontDefault();
 	ImFont* init_arial = init_io.Fonts->AddFontFromFileTTF("res/font/ARLRDBD.ttf", 18);
 	init_io.Fonts->Build();
+
+
+
+
+
+
+
+
+
+
+	/*
+	* Define the functions for the ImFileDialog
+	* Specifically, CreateTexture and DeleteTexture
+	* 
+	* Copy-pasted from the ImFileDialog example code
+	*/
+	ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* {
+		GLuint tex;
+
+		glGenTextures(1, &tex);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, (fmt == 0) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		return (void*)tex;
+	};
+	ifd::FileDialog::Instance().DeleteTexture = [](void* tex) {
+		GLuint texID = (GLuint)((uintptr_t)tex);
+		glDeleteTextures(1, &texID);
+	};
+
+
+
+
+
+
+
+
 
 	SDL_Event init_event;
 	bool doneWithSetPath = false;
@@ -901,40 +946,165 @@ int main(int argc, char* argv[])
 		//Menu Bar
 		if (SmashScoreboard::ISFILEWINDOWOPEN)
 		{
-			SmashScoreboard::OpenFileWindow* win = SmashScoreboard::OpenFileWindow::getWindowPtr();
+			/*SmashScoreboard::OpenFileWindow* win = SmashScoreboard::OpenFileWindow::getWindowPtr();
 			if (!SmashScoreboard::ISFILEWINDOWOPEN)
 				win->CloseWindow();
 			else
+			{*/
+			ImGui::StyleColorsLight();
+
+			if (SmashScoreboard::windowList.size() != 0)
 			{
-				if (SmashScoreboard::windowList.size() != 0)
+				for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
 				{
-					for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
+					if (!SmashScoreboard::windowList[i].get()->isVisible)
 					{
-						if (!SmashScoreboard::windowList[i].get()->isVisible)
+						SmashScoreboard::SmashScoreboardWindow::DeleteWindow(SmashScoreboard::windowList[i].get(), SmashScoreboard::windowList);
+						i--;
+					}
+					else
+					{
+						if (SmashScoreboard::windowList[i].get()->windowTypeIdentifier == "Dialog")
+							SmashScoreboard::windowList[i].get()->perframe();
+					}
+
+				}
+			}
+			//win->perframe();
+
+			if (ifd::FileDialog::Instance().IsDone("WindowConfigLoad"))
+			{
+				bool result = false;
+				if (ifd::FileDialog::Instance().HasResult())
+				{
+					std::string filepath = ifd::FileDialog::Instance().GetResult().string();
+
+					if (SmashScoreboard::LoadFromSSSB(filepath.c_str()))
+						result = true;
+
+
+					if (result)
+					{
+						SmashScoreboard::ISFILEWINDOWOPEN = false;
+						ifd::FileDialog::Instance().Close();
+					}
+					else
+					{
+						SmashScoreboard::DialogWindow::CreateWindow("Loading SSSB File Failed!", "The window config file failed to load!", SmashScoreboard::Dialogs_Warning);
+					}
+				}
+				else
+				{
+					SmashScoreboard::ISFILEWINDOWOPEN = false;
+					ifd::FileDialog::Instance().Close();
+				}
+			}
+
+			if (ifd::FileDialog::Instance().IsDone("WindowConfigSave"))
+			{
+				if (ifd::FileDialog::Instance().HasResult())
+				{
+					std::string filepath = ifd::FileDialog::Instance().GetResult().string();
+
+					std::fstream outputFile;
+					outputFile.open(filepath, std::ios::out | std::ios::trunc);
+					if (outputFile.is_open())
+					{
+						std::string output = "";
+						for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
 						{
-							SmashScoreboard::SmashScoreboardWindow::DeleteWindow(SmashScoreboard::windowList[i].get(), SmashScoreboard::windowList);
-							i--;
+							output += SmashScoreboard::windowList[i].get()->exportToSSSB();
+						}
+						outputFile << output;
+						outputFile.close();
+						SmashScoreboard::DialogWindow::CreateWindow(
+							"Succesfully saved!",
+							"The file was saved to:\n\n\""
+							+ filepath
+							+ "\"", SmashScoreboard::Dialogs_OK);
+					}
+					else
+					{
+						SmashScoreboard::DialogWindow::CreateWindow("Failed to save", "The file could not be saved.", SmashScoreboard::Dialogs_Warning);
+					}
+
+					SmashScoreboard::ISFILEWINDOWOPEN = false;
+					ifd::FileDialog::Instance().Close();
+
+					/*std::fstream checkForFile;
+					checkForFile.open(openpath, std::ios::in);
+					if (checkForFile.is_open())
+					{
+						checkForFile.close();
+						SmashScoreboard::OKCancelDialogWindow::CreateWindow(
+							"File already exists",
+							"This file at path:\n\n"
+							+ openpath
+							+ "\n\nalready exists. Do you want to overwrite it?",
+							SmashScoreboard::OKCANCELDIALOGRESULT,
+							SmashScoreboard::Dialogs_Warning
+						);
+						SmashScoreboard::OKCANCELDIALOGCREATEDYET = true;
+					}
+					else
+					{
+						std::string filepath = ifd::FileDialog::Instance().GetResult().string();
+
+						std::fstream outputFile;
+						outputFile.open(filepath, std::ios::out | std::ios::trunc);
+						if (outputFile.is_open())
+						{
+							std::string output = "";
+							for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
+							{
+								output += SmashScoreboard::windowList[i].get()->exportToSSSB();
+							}
+							outputFile << output;
+							outputFile.close();
+							SmashScoreboard::DialogWindow::CreateWindow(
+								"Succesfully saved!",
+								"The file was saved to:\n\n\""
+								+ filepath
+								+ "\"", SmashScoreboard::Dialogs_OK);
 						}
 						else
 						{
-							if (SmashScoreboard::windowList[i].get()->windowTypeIdentifier == "Dialog")
-								SmashScoreboard::windowList[i].get()->perframe();
+							SmashScoreboard::DialogWindow::CreateWindow("Failed to save", "The file could not be saved.", SmashScoreboard::Dialogs_Warning);
 						}
 
-					}
+						SmashScoreboard::ISFILEWINDOWOPEN = false;
+						ifd::FileDialog::Instance().Close();
+					}*/
 				}
-				win->perframe();
+				else
+				{
+					SmashScoreboard::ISFILEWINDOWOPEN = false;
+					ifd::FileDialog::Instance().Close();
+				}
+
+				//SmashScoreboard::ISFILEWINDOWOPEN = false;
+				//ifd::FileDialog::Instance().Close();
+			}
+
+			
+
 #ifndef NDEBUG
 				ImGui::StyleColorsLight();
 				ImGui::ShowDemoWindow();
 #endif
+
 				auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
 				backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
 					SmashScoreboard::windowHeight), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
-			}
+			//}
 		}
 		else
 		{
+			if (ifd::FileDialog::Instance().HasResult())
+			{
+				std::cout << ifd::FileDialog::Instance().GetResult().string() << std::endl;
+			}
+
 			ImGui::StyleColorsDark();
 
 			ImGui::BeginMainMenuBar();
@@ -945,13 +1115,17 @@ int main(int argc, char* argv[])
 				{
 					if (ImGui::MenuItem("Load Window Config"))
 					{
-						SmashScoreboard::OpenFileWindow::CreateWindow(true);
-						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(OpenFileWindowCallback_LOADSSSBWINDOWCONFIG);
+						SmashScoreboard::ISFILEWINDOWOPEN = true;
+						ifd::FileDialog::Instance().Open("WindowConfigLoad", "Load a .SSSB window config", "SSSB Window Config (*.sssb){.sssb}");
+						/*SmashScoreboard::OpenFileWindow::CreateWindow(true);
+						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(OpenFileWindowCallback_LOADSSSBWINDOWCONFIG);*/
 					}
 					if (ImGui::MenuItem("Save Window Config"))
 					{
-						SmashScoreboard::OpenFileWindow::CreateWindow(false);
-						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(SaveFileWindowCallback_SAVESSSBWINDOWCONFIG);
+						SmashScoreboard::ISFILEWINDOWOPEN = true;
+						ifd::FileDialog::Instance().Save("WindowConfigSave", "Save a .SSSB window config", "SSSB Window Config (*.sssb){.sssb}");
+						/*SmashScoreboard::OpenFileWindow::CreateWindow(false);
+						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(SaveFileWindowCallback_SAVESSSBWINDOWCONFIG);*/
 					}
 					ImGui::EndMenu();
 				}

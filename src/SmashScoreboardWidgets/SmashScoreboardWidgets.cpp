@@ -15,6 +15,9 @@ bool SmashScoreboard::ISFILEWINDOWOPEN = false;
 
 bool SmashScoreboard::ISDIALOGOPEN = false;
 
+bool SmashScoreboard::OKCANCELDIALOGCREATEDYET = false;
+bool SmashScoreboard::OKCANCELDIALOGRESULT = false;
+
 std::vector<std::shared_ptr<SmashScoreboard::SmashScoreboardWindow>> SmashScoreboard::windowList;
 
 // LoadFromSSSB()
