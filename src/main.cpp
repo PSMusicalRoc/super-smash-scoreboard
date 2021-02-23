@@ -30,7 +30,7 @@
 //Version semantics
 #define SSSBMAJOR 0
 #define SSSBMINOR 0
-#define SSSBMICRO 5
+#define SSSBMICRO 6
 #define SSSBNANO  0
 #define SSSBBETA  true
 
