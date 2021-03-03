@@ -22,15 +22,19 @@
 #include <thread>
 #include <time.h>
 
+#include <ImFileDialog.h>
+
 #include "SmashScoreboardFunctions.h"
 #include "SmashScoreboardWidgets.h"
 
 //Version semantics
 #define SSSBMAJOR 0
 #define SSSBMINOR 0
-#define SSSBMICRO 5
+#define SSSBMICRO 6
 #define SSSBNANO  0
 #define SSSBBETA  true
+
+#define IMGBASEDIR "res/ImageCache"
 
 namespace fs = std::filesystem;
 
@@ -67,20 +71,11 @@ std::map<char, Character> Characters;
 void CoordsToOpenGL(double& width , double& height, bool absVal = false)
 {
 	width = (width / SmashScoreboard::windowWidth);
-	/*if (width < .5)
-		width = -.5 + width;
-	else
-		width = (width - .5);*/
 	width = (width -.5) * 2;
 	if (absVal)
 		width = abs(width);
 
 	height = (height / SmashScoreboard::windowHeight);
-	/*if (height < .5)
-		height = -height;
-	else
-		height = (height - .5) / 2;
-	height *= 2;*/
 	height = (height - .5) * 2;
 	if (absVal)
 		height = abs(height);
@@ -225,14 +220,6 @@ int main(int argc, char* argv[])
 	SDL_SetWindowIcon(window, winicon);
 	SDL_FreeSurface(winicon);
 
-	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
-	if (renderer == NULL)
-	{
-		std::cout << "Error in SDL_CreateRenderer(): " << SDL_GetError() << std::endl;
-		return -1;
-	}
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-
 	//Create OPENGL Context for ImGui
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 
@@ -246,6 +233,183 @@ int main(int argc, char* argv[])
 	std::cout << "Current GL Version: " << glGetString(GL_VERSION) << std::endl;
 	
 	glClearColor(0, 0, 0, 255);
+
+
+
+	/**
+	* ALRIGHT, TIME TO IMPLEMENT SOME CUSTOMIZABILITY
+	* 
+	* This should open an ImGuiWindow that has a radiobutton
+	* allowing the user to choose a folder from the res/imgcache folder
+	* to load into memory and use. At this point, the only way
+	* to change these sets out are by restarting the program.
+	*/
+	//SETUP IMGUI
+
+	//SETUP DEAR IMGUI CONTEXT
+	IMGUI_CHECKVERSION();
+	ImGuiContext* tempContext =  ImGui::CreateContext();
+	ImGuiIO& init_io = ImGui::GetIO();
+
+	//ImFont* font = io.Fonts->AddFontDefault();
+	ImFont* init_arial = init_io.Fonts->AddFontFromFileTTF("res/font/ARLRDBD.ttf", 18);
+	init_io.Fonts->Build();
+
+
+
+
+
+
+
+
+
+
+	/*
+	* Define the functions for the ImFileDialog
+	* Specifically, CreateTexture and DeleteTexture
+	* 
+	* Copy-pasted from the ImFileDialog example code
+	*/
+	ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* {
+		GLuint tex;
+
+		glGenTextures(1, &tex);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, (fmt == 0) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		return (void*)tex;
+	};
+	ifd::FileDialog::Instance().DeleteTexture = [](void* tex) {
+		GLuint texID = (GLuint)((uintptr_t)tex);
+		glDeleteTextures(1, &texID);
+	};
+
+
+
+
+
+
+
+
+
+	SDL_Event init_event;
+	bool doneWithSetPath = false;
+	bool shouldClose = false;
+
+	int selection = 0;
+
+	std::vector<std::string> DirectoriesInPath;
+	std::vector<std::string> DirectoriesDisplay;
+	std::string ChosenPath;
+
+	//SETUP PLATFORM/RENDERER BINDINGS
+	ImGui_ImplSDL2_InitForOpenGL(window, context);
+	ImGui_ImplOpenGL3_Init();
+
+	while (!doneWithSetPath)
+	{
+		while (SDL_PollEvent(&init_event))
+		{
+			switch (init_event.type)
+			{
+			case SDL_QUIT:
+				doneWithSetPath = true;
+				shouldClose = true;
+				break;
+			case SDL_WINDOWEVENT:
+				switch (init_event.window.event) {
+				case SDL_WINDOWEVENT_SIZE_CHANGED:
+					SmashScoreboard::windowWidth = init_event.window.data1;
+					SmashScoreboard::windowHeight = init_event.window.data2;
+					break;
+				}
+			}
+
+			ImGui_ImplSDL2_ProcessEvent(&init_event);
+		}
+
+		ImGui_ImplSDL2_NewFrame(window);
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui::NewFrame();
+
+		ImGui::StyleColorsLight();
+#ifndef NDEBUG
+		ImGui::ShowDemoWindow();
+#endif
+
+		DirectoriesInPath.clear();
+		DirectoriesDisplay.clear();
+
+		for (const auto& entry : fs::directory_iterator(IMGBASEDIR))
+		{
+			if (entry.is_directory())
+			{
+				std::string path = entry.path().string();
+				DirectoriesInPath.push_back(path);
+
+				std::string name = path;
+				//We add one to compensate for the slash
+				name.erase(0, std::string(IMGBASEDIR).size() + 1);
+				DirectoriesDisplay.push_back(name);
+			}
+		}
+
+		ImGui::Begin("Choose Image Set", (bool*)0, ImGuiColumnsFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+
+		int i = 0;
+		//ImGui::RadioButton("##Choice", true);
+		for (std::string disp : DirectoriesDisplay)
+		{
+			ImGui::RadioButton(disp.c_str(), &selection, i);
+			i++;
+		}
+
+		ImGui::Separator();
+
+		if (ImGui::Button("Load!"))
+		{
+			doneWithSetPath = true;
+		}
+
+		ImGui::End();
+
+		ImGui::EndFrame();
+
+		ImGui::Render();
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		SDL_GL_SwapWindow(window);
+	}
+
+	ImGui_ImplSDL2_Shutdown();
+	ImGui_ImplOpenGL3_Shutdown();
+
+	ImGui::DestroyContext(tempContext);
+
+	std::string DirectoryToLoad = DirectoriesInPath[selection];
+	if (DirectoryToLoad.back() != '/' and DirectoryToLoad.back() != '\\')
+	{
+		DirectoryToLoad += '\\';
+	}
+
+	if (shouldClose)
+	{
+		SmashScoreboard::uninit();
+
+		SDL_DestroyWindow(window);
+		SDL_GL_DeleteContext(threadContext);
+		SDL_GL_DeleteContext(context);
+
+		return 0;
+	}
 
 
 
@@ -491,15 +655,31 @@ int main(int argc, char* argv[])
 		spinner_texs[i] = SmashScoreboard::LoadAndInitTex(("res/loader/spin_anim/frame-" + std::to_string(i) + ".png").c_str(), 0, false);
 	}
 
+	double spinner_xpos = (SmashScoreboard::windowWidth / 2) - 50;
+	double spinner_ypos = (SmashScoreboard::windowHeight / 2) - 50;
+
+	double spinner_widthlength = 100;
+	double spinner_heightlength = 100;
+
+	CoordsToOpenGL(spinner_xpos, spinner_ypos);
+	SizeToOpenGL(spinner_widthlength, spinner_heightlength);
+
+#ifndef NDEBUG
+	std::cout << "Spinner_XPOS: " << spinner_xpos << std::endl;
+	std::cout << "Spinner_YPOS: " << spinner_ypos << std::endl;
+	std::cout << "Spinner_widthlength: " << spinner_widthlength << std::endl;
+	std::cout << "Spinner_heightlength: " << spinner_heightlength << std::endl;
+#endif
+
 	GLfloat spinnerRect_verts[] = {
 		
-		//positions			//texture coords
-		-0.05,	-0.25,		0.0,	0.0,
-		0.05,	-0.25,		1.0,	0.0,
-		0.05,	-0.35,		1.0,	1.0,
-		0.05,	-0.35,		1.0,	1.0,
-		-0.05,	-0.35,		0.0,	1.0,
-		-0.05,	-0.25,		0.0,	0.0,
+		//positions																	//texture coords
+		spinner_xpos,						spinner_ypos,							0.0,	0.0,
+		spinner_xpos + spinner_widthlength,	spinner_ypos,							1.0,	0.0,
+		spinner_xpos + spinner_widthlength,	spinner_ypos - spinner_heightlength,	1.0,	1.0,
+		spinner_xpos + spinner_widthlength,	spinner_ypos - spinner_heightlength,	1.0,	1.0,
+		spinner_xpos,						spinner_ypos - spinner_heightlength,	0.0,	1.0,
+		spinner_xpos,						spinner_ypos,							0.0,	0.0,
 	};
 
 	GLuint spinnerRect = 12;
@@ -591,8 +771,7 @@ int main(int argc, char* argv[])
 
 	SmashScoreboard::internalsInit();
 
-	std::thread initThread(SmashScoreboard::init, "res/ImageCache/Smash Ultimate Full Art/_CharList.txt", std::ref(window), threadContext);
-	//SmashScoreboard::init("res/ImageCache/Smash Ultimate Full Art/_CharList.txt", renderer, loader, destRect);
+	std::thread initThread(SmashScoreboard::init, DirectoryToLoad, std::ref(window), threadContext);
 
 	clock_t time_started;
 	clock_t time_to_delay;
@@ -642,10 +821,6 @@ int main(int argc, char* argv[])
 	initThread.join();
 
 	SDL_GL_DeleteContext(threadContext);
-
-	//DESTROY RENDERER AND LOADER TEXTURES
-
-	SDL_DestroyRenderer(renderer);
 
 	//DONE NOW
 
@@ -787,40 +962,165 @@ int main(int argc, char* argv[])
 		//Menu Bar
 		if (SmashScoreboard::ISFILEWINDOWOPEN)
 		{
-			SmashScoreboard::OpenFileWindow* win = SmashScoreboard::OpenFileWindow::getWindowPtr();
+			/*SmashScoreboard::OpenFileWindow* win = SmashScoreboard::OpenFileWindow::getWindowPtr();
 			if (!SmashScoreboard::ISFILEWINDOWOPEN)
 				win->CloseWindow();
 			else
+			{*/
+			ImGui::StyleColorsLight();
+
+			if (SmashScoreboard::windowList.size() != 0)
 			{
-				if (SmashScoreboard::windowList.size() != 0)
+				for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
 				{
-					for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
+					if (!SmashScoreboard::windowList[i].get()->isVisible)
 					{
-						if (!SmashScoreboard::windowList[i].get()->isVisible)
+						SmashScoreboard::SmashScoreboardWindow::DeleteWindow(SmashScoreboard::windowList[i].get(), SmashScoreboard::windowList);
+						i--;
+					}
+					else
+					{
+						if (SmashScoreboard::windowList[i].get()->windowTypeIdentifier == "Dialog")
+							SmashScoreboard::windowList[i].get()->perframe();
+					}
+
+				}
+			}
+			//win->perframe();
+
+			if (ifd::FileDialog::Instance().IsDone("WindowConfigLoad"))
+			{
+				bool result = false;
+				if (ifd::FileDialog::Instance().HasResult())
+				{
+					std::string filepath = ifd::FileDialog::Instance().GetResult().string();
+
+					if (SmashScoreboard::LoadFromSSSB(filepath.c_str()))
+						result = true;
+
+
+					if (result)
+					{
+						SmashScoreboard::ISFILEWINDOWOPEN = false;
+						ifd::FileDialog::Instance().Close();
+					}
+					else
+					{
+						SmashScoreboard::DialogWindow::CreateWindow("Loading SSSB File Failed!", "The window config file failed to load!", SmashScoreboard::Dialogs_Warning);
+					}
+				}
+				else
+				{
+					SmashScoreboard::ISFILEWINDOWOPEN = false;
+					ifd::FileDialog::Instance().Close();
+				}
+			}
+
+			if (ifd::FileDialog::Instance().IsDone("WindowConfigSave"))
+			{
+				if (ifd::FileDialog::Instance().HasResult())
+				{
+					std::string filepath = ifd::FileDialog::Instance().GetResult().string();
+
+					std::fstream outputFile;
+					outputFile.open(filepath, std::ios::out | std::ios::trunc);
+					if (outputFile.is_open())
+					{
+						std::string output = "";
+						for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
 						{
-							SmashScoreboard::SmashScoreboardWindow::DeleteWindow(SmashScoreboard::windowList[i].get(), SmashScoreboard::windowList);
-							i--;
+							output += SmashScoreboard::windowList[i].get()->exportToSSSB();
+						}
+						outputFile << output;
+						outputFile.close();
+						SmashScoreboard::DialogWindow::CreateWindow(
+							"Succesfully saved!",
+							"The file was saved to:\n\n\""
+							+ filepath
+							+ "\"", SmashScoreboard::Dialogs_OK);
+					}
+					else
+					{
+						SmashScoreboard::DialogWindow::CreateWindow("Failed to save", "The file could not be saved.", SmashScoreboard::Dialogs_Warning);
+					}
+
+					SmashScoreboard::ISFILEWINDOWOPEN = false;
+					ifd::FileDialog::Instance().Close();
+
+					/*std::fstream checkForFile;
+					checkForFile.open(openpath, std::ios::in);
+					if (checkForFile.is_open())
+					{
+						checkForFile.close();
+						SmashScoreboard::OKCancelDialogWindow::CreateWindow(
+							"File already exists",
+							"This file at path:\n\n"
+							+ openpath
+							+ "\n\nalready exists. Do you want to overwrite it?",
+							SmashScoreboard::OKCANCELDIALOGRESULT,
+							SmashScoreboard::Dialogs_Warning
+						);
+						SmashScoreboard::OKCANCELDIALOGCREATEDYET = true;
+					}
+					else
+					{
+						std::string filepath = ifd::FileDialog::Instance().GetResult().string();
+
+						std::fstream outputFile;
+						outputFile.open(filepath, std::ios::out | std::ios::trunc);
+						if (outputFile.is_open())
+						{
+							std::string output = "";
+							for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
+							{
+								output += SmashScoreboard::windowList[i].get()->exportToSSSB();
+							}
+							outputFile << output;
+							outputFile.close();
+							SmashScoreboard::DialogWindow::CreateWindow(
+								"Succesfully saved!",
+								"The file was saved to:\n\n\""
+								+ filepath
+								+ "\"", SmashScoreboard::Dialogs_OK);
 						}
 						else
 						{
-							if (SmashScoreboard::windowList[i].get()->windowTypeIdentifier == "Dialog")
-								SmashScoreboard::windowList[i].get()->perframe();
+							SmashScoreboard::DialogWindow::CreateWindow("Failed to save", "The file could not be saved.", SmashScoreboard::Dialogs_Warning);
 						}
 
-					}
+						SmashScoreboard::ISFILEWINDOWOPEN = false;
+						ifd::FileDialog::Instance().Close();
+					}*/
 				}
-				win->perframe();
+				else
+				{
+					SmashScoreboard::ISFILEWINDOWOPEN = false;
+					ifd::FileDialog::Instance().Close();
+				}
+
+				//SmashScoreboard::ISFILEWINDOWOPEN = false;
+				//ifd::FileDialog::Instance().Close();
+			}
+
+			
+
 #ifndef NDEBUG
 				ImGui::StyleColorsLight();
 				ImGui::ShowDemoWindow();
 #endif
+
 				auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
 				backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
 					SmashScoreboard::windowHeight), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
-			}
+			//}
 		}
 		else
 		{
+			if (ifd::FileDialog::Instance().HasResult())
+			{
+				std::cout << ifd::FileDialog::Instance().GetResult().string() << std::endl;
+			}
+
 			ImGui::StyleColorsDark();
 
 			ImGui::BeginMainMenuBar();
@@ -831,13 +1131,17 @@ int main(int argc, char* argv[])
 				{
 					if (ImGui::MenuItem("Load Window Config"))
 					{
-						SmashScoreboard::OpenFileWindow::CreateWindow(true);
-						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(OpenFileWindowCallback_LOADSSSBWINDOWCONFIG);
+						SmashScoreboard::ISFILEWINDOWOPEN = true;
+						ifd::FileDialog::Instance().Open("WindowConfigLoad", "Load a .SSSB window config", "SSSB Window Config (*.sssb){.sssb}");
+						/*SmashScoreboard::OpenFileWindow::CreateWindow(true);
+						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(OpenFileWindowCallback_LOADSSSBWINDOWCONFIG);*/
 					}
 					if (ImGui::MenuItem("Save Window Config"))
 					{
-						SmashScoreboard::OpenFileWindow::CreateWindow(false);
-						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(SaveFileWindowCallback_SAVESSSBWINDOWCONFIG);
+						SmashScoreboard::ISFILEWINDOWOPEN = true;
+						ifd::FileDialog::Instance().Save("WindowConfigSave", "Save a .SSSB window config", "SSSB Window Config (*.sssb){.sssb}");
+						/*SmashScoreboard::OpenFileWindow::CreateWindow(false);
+						SmashScoreboard::OpenFileWindow::getWindowPtr()->SetCallback(SaveFileWindowCallback_SAVESSSBWINDOWCONFIG);*/
 					}
 					ImGui::EndMenu();
 				}

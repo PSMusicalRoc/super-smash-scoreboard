@@ -150,6 +150,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\glad\glad.c" />
+    <ClCompile Include="src\ImFileDialog\ImFileDialog.cpp" />
     <ClCompile Include="src\imgui\imgui.cpp" />
     <ClCompile Include="src\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\imgui\imgui_draw.cpp" />
@@ -260,6 +261,7 @@
     <ClInclude Include="include\ft2build.h" />
     <ClInclude Include="include\glad\glad.h" />
     <ClInclude Include="include\imconfig.h" />
+    <ClInclude Include="include\ImFileDialog.h" />
     <ClInclude Include="include\imgui.h" />
     <ClInclude Include="include\imgui_impl_opengl3.h" />
     <ClInclude Include="include\imgui_impl_sdl.h" />
@@ -270,6 +272,7 @@
     <ClInclude Include="include\KHR\khrplatform.h" />
     <ClInclude Include="include\SmashScoreboardFunctions.h" />
     <ClInclude Include="include\SmashScoreboardWidgets.h" />
+    <ClInclude Include="include\stb_image.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

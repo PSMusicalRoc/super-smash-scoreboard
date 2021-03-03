@@ -10,6 +10,7 @@
 #include <string>
 #include <algorithm>
 #include <fstream>
+#include <filesystem>
 //#include <iostream>
 
 namespace SmashScoreboard
@@ -27,10 +28,14 @@ namespace SmashScoreboard
 	extern GLuint Dialogs_OK;
 	extern GLuint Dialogs_Warning;
 
+	//Please keep in mind that this variable will
+	//always end in a backslash
+	extern std::string resPath;
+
 	extern std::string processMessage;
 
 	void internalsInit();
-	void init(const char* pathToList, SDL_Window* win, SDL_GLContext context);
+	void init(std::string dirPath, SDL_Window* win, SDL_GLContext context);
 
 	struct CharacterName
 	{
