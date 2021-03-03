@@ -345,3 +345,5 @@ resource.h
 SmashScoreboard.rc
 icon1.ico
 *.sssb
+/res/loader/background_old.png
+/res/loader/loader_od.png

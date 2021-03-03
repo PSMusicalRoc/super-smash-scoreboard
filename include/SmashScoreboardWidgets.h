@@ -28,6 +28,11 @@ namespace SmashScoreboard
 	extern bool ISFILEWINDOWOPEN;
 	extern bool ISDIALOGOPEN;
 
+	//This variable holds whether or not the perframe should check
+	//if there's a result from an OKCancelDialog yet
+	extern bool OKCANCELDIALOGCREATEDYET;
+	extern bool OKCANCELDIALOGRESULT;
+
 	bool LoadFromSSSB(const char* filename);
 
 	struct SmashScoreboardWindow
