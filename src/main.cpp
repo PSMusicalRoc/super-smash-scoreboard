@@ -110,7 +110,7 @@ void renderWhiteText(std::string text, unsigned int height)
 	std::string::const_iterator c;
 
 	//This is updated with the width of the overall string
-	int overallWidth = 0;
+	int overallWidth = 0.0;
 
 	//This holds the starting x value of the string. It will
 	//be set on the first trip around, but if this fails for
@@ -149,7 +149,7 @@ void renderWhiteText(std::string text, unsigned int height)
 		SizeToOpenGL(w, h);
 
 		//Update VBO for each character
-		double verticies[6][4] = {
+		float verticies[6][4] = {
 			{ xpos,		ypos + h,	0.0f, 0.0f },
 			{ xpos,     ypos,       0.0f, 1.0f },
 			{ xpos + w, ypos,       1.0f, 1.0f },
@@ -655,8 +655,8 @@ int main(int argc, char* argv[])
 		spinner_texs[i] = SmashScoreboard::LoadAndInitTex(("res/loader/spin_anim/frame-" + std::to_string(i) + ".png").c_str(), 0, false);
 	}
 
-	double spinner_xpos = (double)(SmashScoreboard::windowWidth / 2) - 50;
-	double spinner_ypos = (double)(SmashScoreboard::windowHeight / 2) - 50;
+	double spinner_xpos = (SmashScoreboard::windowWidth / 2) - 50;
+	double spinner_ypos = (SmashScoreboard::windowHeight / 2) - 50;
 
 	double spinner_widthlength = 100;
 	double spinner_heightlength = 100;
@@ -671,7 +671,7 @@ int main(int argc, char* argv[])
 	std::cout << "Spinner_heightlength: " << spinner_heightlength << std::endl;
 #endif
 
-	GLdouble spinnerRect_verts[] = {
+	GLfloat spinnerRect_verts[] = {
 		
 		//positions																	//texture coords
 		spinner_xpos,						spinner_ypos,							0.0,	0.0,
@@ -912,7 +912,7 @@ int main(int argc, char* argv[])
 				ImGui::End();
 
 				auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
-				backgrounddrawlist->AddImage((void*)(uintptr_t)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
+				backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
 					SmashScoreboard::windowHeight), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
 			}
 
@@ -1110,7 +1110,7 @@ int main(int argc, char* argv[])
 #endif
 
 				auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
-				backgrounddrawlist->AddImage((void*)(uintptr_t)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
+				backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
 					SmashScoreboard::windowHeight), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
 			//}
 		}
@@ -1222,7 +1222,7 @@ int main(int argc, char* argv[])
 				}
 			}
 			NoWindows: auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
-			backgrounddrawlist->AddImage((void*)(uintptr_t)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
+			backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
 				SmashScoreboard::windowHeight), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
 		}
 		ImGui::EndFrame();
