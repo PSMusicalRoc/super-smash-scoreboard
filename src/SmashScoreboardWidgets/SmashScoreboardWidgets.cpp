@@ -35,7 +35,8 @@ bool SmashScoreboard::LoadFromSSSB(const char* filename)
 		bool isWindowStarted = false;
 
 		enum {	CHARACTERWINDOW = 1,
-				NAMEWINDOW		= 2};
+				NAMEWINDOW		= 2,
+				SCOREWINDOW		= 3};
 
 		int windowType;
 		int styleIndex = 1;
@@ -60,6 +61,11 @@ bool SmashScoreboard::LoadFromSSSB(const char* filename)
 						windowType = NAMEWINDOW;
 						isWindowStarted = true;
 					}
+					else if (windowTypeString == "ScoreWindow")
+					{
+						windowType = SCOREWINDOW;
+						isWindowStarted = true;
+					}
 				}
 			}
 			else
@@ -75,6 +81,9 @@ bool SmashScoreboard::LoadFromSSSB(const char* filename)
 							break;
 						case NAMEWINDOW:
 							SmashScoreboard::PlayerTextWindow::CreateWindow(windowName, styleIndex);
+							break;
+						case SCOREWINDOW:
+							SmashScoreboard::ScoreWindow::CreateWindow(windowName, styleIndex);
 							break;
 						}
 

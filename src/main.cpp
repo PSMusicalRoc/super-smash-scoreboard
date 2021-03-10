@@ -1046,60 +1046,12 @@ int main(int argc, char* argv[])
 
 					SmashScoreboard::ISFILEWINDOWOPEN = false;
 					ifd::FileDialog::Instance().Close();
-
-					/*std::fstream checkForFile;
-					checkForFile.open(openpath, std::ios::in);
-					if (checkForFile.is_open())
-					{
-						checkForFile.close();
-						SmashScoreboard::OKCancelDialogWindow::CreateWindow(
-							"File already exists",
-							"This file at path:\n\n"
-							+ openpath
-							+ "\n\nalready exists. Do you want to overwrite it?",
-							SmashScoreboard::OKCANCELDIALOGRESULT,
-							SmashScoreboard::Dialogs_Warning
-						);
-						SmashScoreboard::OKCANCELDIALOGCREATEDYET = true;
-					}
-					else
-					{
-						std::string filepath = ifd::FileDialog::Instance().GetResult().string();
-
-						std::fstream outputFile;
-						outputFile.open(filepath, std::ios::out | std::ios::trunc);
-						if (outputFile.is_open())
-						{
-							std::string output = "";
-							for (int i = 0; i < SmashScoreboard::windowList.size(); i++)
-							{
-								output += SmashScoreboard::windowList[i].get()->exportToSSSB();
-							}
-							outputFile << output;
-							outputFile.close();
-							SmashScoreboard::DialogWindow::CreateWindow(
-								"Succesfully saved!",
-								"The file was saved to:\n\n\""
-								+ filepath
-								+ "\"", SmashScoreboard::Dialogs_OK);
-						}
-						else
-						{
-							SmashScoreboard::DialogWindow::CreateWindow("Failed to save", "The file could not be saved.", SmashScoreboard::Dialogs_Warning);
-						}
-
-						SmashScoreboard::ISFILEWINDOWOPEN = false;
-						ifd::FileDialog::Instance().Close();
-					}*/
 				}
 				else
 				{
 					SmashScoreboard::ISFILEWINDOWOPEN = false;
 					ifd::FileDialog::Instance().Close();
 				}
-
-				//SmashScoreboard::ISFILEWINDOWOPEN = false;
-				//ifd::FileDialog::Instance().Close();
 			}
 
 			
@@ -1161,6 +1113,13 @@ int main(int argc, char* argv[])
 					if (!SmashScoreboard::checkForTakenIdentifier("Create New Player Name Window"))
 						SmashScoreboard::AddPlayerTextWindow::CreateWindow();
 						//SmashScoreboard::PlayerTextWindow::CreateWindow("Test Player", 1);
+				}
+				if (ImGui::MenuItem("Add Score Window"))
+				{
+					if (!SmashScoreboard::checkForTakenIdentifier("Score Window"))
+					{
+						SmashScoreboard::ScoreWindow::CreateWindow("Score Window", 1);
+					}
 				}
 
 				ImGui::EndMenu();
