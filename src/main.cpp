@@ -1068,11 +1068,6 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			if (ifd::FileDialog::Instance().HasResult())
-			{
-				std::cout << ifd::FileDialog::Instance().GetResult().string() << std::endl;
-			}
-
 			ImGui::StyleColorsDark();
 
 			ImGui::BeginMainMenuBar();
