@@ -275,6 +275,25 @@ namespace SmashScoreboard
 		void perframe() override;
 	};
 
+	class ScoreWindow : public SmashScoreboardWindow
+	{
+	private:
+		//Stores the input box data
+		int scoreInt;
+		int comparisonScoreInt;
+
+		int styleIndex;
+
+	public:
+
+		ScoreWindow(std::string winName = "", int styleIndex = 1);
+		~ScoreWindow() {}
+		static ScoreWindow* CreateWindow(std::string winName = "", int styleIndex = 1);
+
+		void perframe() override;
+		std::string exportToSSSB() override;
+	};
+
 	extern std::vector<std::shared_ptr<SmashScoreboardWindow>> windowList;
 
 	bool checkForTakenIdentifier(std::string ident);

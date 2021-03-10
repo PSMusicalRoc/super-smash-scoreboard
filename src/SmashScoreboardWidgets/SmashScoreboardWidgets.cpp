@@ -843,6 +843,79 @@ std::string SmashScoreboard::PlayerTextWindow::exportToSSSB()
 	return output;
 }
 
+// [SECTION] ScoreWindow()
+
+SmashScoreboard::ScoreWindow::ScoreWindow(std::string winName, int styleIndex)
+	:SmashScoreboardWindow(winName), styleIndex(styleIndex)
+{
+	if (this->windowName == "" or this->windowName == "default")
+		this->windowName == "Player Name Window";
+
+	std::fstream outputFile;
+	outputFile.open(("Output/" + this->windowName + ".txt"), std::ios::in);
+	if (outputFile.is_open())
+	{
+		char instring[128];
+		outputFile.getline(instring, IM_ARRAYSIZE(instring));
+		outputFile.close();
+		std::string instr = std::string(instring);
+		this->scoreInt = this->comparisonScoreInt = std::stoi(instring);
+	}
+	else
+	{
+		this->scoreInt = 0;
+		this->comparisonScoreInt = 0;
+	}
+}
+
+SmashScoreboard::ScoreWindow* SmashScoreboard::ScoreWindow::CreateWindow(std::string winName, int styleIndex)
+{
+	std::shared_ptr<SmashScoreboardWindow> win = std::make_shared<ScoreWindow>(winName, styleIndex);
+	windowList.push_back(win);
+	return (ScoreWindow*)win.get();
+}
+
+void SmashScoreboard::ScoreWindow::perframe()
+{
+	if (this->isVisible)
+	{
+		std::fstream outputFile;
+		outputFile.open(("Output/" + this->windowName + ".txt"), std::ios::in);
+		if (outputFile.is_open())
+		{
+			char instring[128];
+			outputFile.getline(instring, IM_ARRAYSIZE(instring));
+			outputFile.close();
+			std::string instr = instring;
+			this->comparisonScoreInt = std::stoi(instring);
+		}
+
+		ImGui::SetNextWindowSize(ImVec2(400, 100), ImGuiCond_FirstUseEver);
+
+		SmashScoreboard::StyleColorsFromIndex(this->styleIndex);
+
+		ImGuiWindowFlags flags = 0;
+		if (ISDIALOGOPEN)
+			flags = flags | ImGuiWindowFlags_NoInputs;
+
+		ImGui::Begin((this->windowName + "###" + this->windowName).c_str(), &this->isVisible, flags);
+
+		
+
+		ImGui::End();
+	}
+}
+
+std::string SmashScoreboard::ScoreWindow::exportToSSSB()
+{
+	std::string output = "start ScoreWindow\n";
+	output += "styleIndex " + std::to_string(this->styleIndex) + "\n";
+	output += "windowName " + this->windowName + "\n";
+	output += "end\n\n";
+
+	return output;
+}
+
 // [SECTION] AddPlayerTextWindow()
 
 SmashScoreboard::AddPlayerTextWindow::AddPlayerTextWindow()
