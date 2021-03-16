@@ -614,11 +614,11 @@ void SmashScoreboard::PlayerOneSelectWindow::perframe()
 							int imageNum = j - cname.indexLow + 1;
 
 							const auto copyOptions = fs::copy_options::overwrite_existing;
-							std::string topath = "Output\\" + this->windowName + ".png";
+							std::string topath = "Output/" + this->windowName + ".png";
 							fs::path to = topath;
 							std::string frompath = SmashScoreboard::resPath;
 							frompath += SmashScoreboard::characterList[i].text.c_str();
-							frompath += "\\";
+							frompath += "/";
 							frompath += SmashScoreboard::characterList[i].text.c_str();
 							if (imageNum < 10)
 								frompath += "_0" + std::to_string(imageNum);
