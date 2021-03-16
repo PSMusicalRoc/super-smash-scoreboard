@@ -179,6 +179,12 @@ void renderWhiteText(std::string text, unsigned int height)
 
 int main(int argc, char* argv[])
 {
+
+	char cwd[400];
+	getcwd(cwd, 400);
+	
+	std::cout << cwd << std::endl;
+
 	//SETUP SDL2
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) > 0)
@@ -252,7 +258,7 @@ int main(int argc, char* argv[])
 	ImGuiIO& init_io = ImGui::GetIO();
 
 	//ImFont* font = io.Fonts->AddFontDefault();
-	ImFont* init_arial = init_io.Fonts->AddFontFromFileTTF("res/font/ARLRDBD.ttf", 18);
+	ImFont* init_arial = init_io.Fonts->AddFontFromFileTTF("./res/font/ARLRDBD.ttf", 18);
 	init_io.Fonts->Build();
 
 
@@ -395,9 +401,10 @@ int main(int argc, char* argv[])
 	ImGui::DestroyContext(tempContext);
 
 	std::string DirectoryToLoad = DirectoriesInPath[selection];
+	std::cout << DirectoryToLoad << std::endl << std::endl;
 	if (DirectoryToLoad.back() != '/' and DirectoryToLoad.back() != '\\')
 	{
-		DirectoryToLoad += '\\';
+		DirectoryToLoad += '/';
 	}
 
 	if (shouldClose)
@@ -434,7 +441,7 @@ int main(int argc, char* argv[])
 
 	FT_Face arial_font_face;
 
-	error = FT_New_Face(library, "res/font/ARLRDBD.TTF", 0, &arial_font_face);
+	error = FT_New_Face(library, "res/font/ARLRDBD.ttf", 0, &arial_font_face);
 	if (error == FT_Err_Unknown_File_Format)
 	{
 		std::cout << "An error has occured during the loading of FreeType2!" << std::endl;

@@ -5,6 +5,9 @@
 	#include <Windows.h>
 	#pragma push_macro("CreateWindow")
 	#undef CreateWindow
+	#define strcpy_mac strcpy_s
+#elif __linux__
+	#define strcpy_mac strcpy
 #endif
 
 namespace fs = std::filesystem;
@@ -277,11 +280,11 @@ void SmashScoreboard::OpenFileWindow::perframe()
 				}
 
 				this->readableFolderPath = _testpath;
-				strcpy_s(this->folderpathbuf, _testpath.c_str());
+				strcpy_mac(this->folderpathbuf, _testpath.c_str());
 			}
 			catch (fs::filesystem_error e)
 			{
-				strcpy_s(this->folderpathbuf, this->readableFolderPath.c_str());
+				strcpy_mac(this->folderpathbuf, this->readableFolderPath.c_str());
 			}
 		}
 		ImGui::SameLine();
@@ -299,11 +302,11 @@ void SmashScoreboard::OpenFileWindow::perframe()
 				}
 
 				this->readableFolderPath = _testpath;
-				strcpy_s(this->folderpathbuf, _testpath.c_str());
+				strcpy_mac(this->folderpathbuf, _testpath.c_str());
 			}
 			catch (fs::filesystem_error e)
 			{
-				strcpy_s(this->folderpathbuf, this->readableFolderPath.c_str());
+				strcpy_mac(this->folderpathbuf, this->readableFolderPath.c_str());
 			}
 		}
 
@@ -342,7 +345,7 @@ void SmashScoreboard::OpenFileWindow::perframe()
 
 			}
 
-			strcpy_s(this->folderpathbuf, this->readableFolderPath.c_str());
+			strcpy_mac(this->folderpathbuf, this->readableFolderPath.c_str());
 		}
 
 		ImGui::BeginChild((ImGuiID)1, ImVec2(0, windowHeight - 120), true, childflags);
@@ -376,18 +379,18 @@ void SmashScoreboard::OpenFileWindow::perframe()
 							std::string _tempname = name;
 							_tempname.replace(name.find('\\'), 1, "");
 							this->readableFolderPath = this->readableFolderPath + _tempname;
-							strcpy_s(this->folderpathbuf, this->readableFolderPath.c_str());
+							strcpy_mac(this->folderpathbuf, this->readableFolderPath.c_str());
 						}
 						else
 						{
 							this->readableFolderPath = this->readableFolderPath + name;
-							strcpy_s(this->folderpathbuf, this->readableFolderPath.c_str());
+							strcpy_mac(this->folderpathbuf, this->readableFolderPath.c_str());
 						}
 					}
 					else
 					{
 						this->readableFileName = name;
-						strcpy_s(this->filenamebuf, this->readableFileName.c_str());
+						strcpy_mac(this->filenamebuf, this->readableFileName.c_str());
 
 					}
 				}
@@ -409,7 +412,7 @@ void SmashScoreboard::OpenFileWindow::perframe()
 				if (ImGui::IsItemClicked())
 				{
 					this->readableFileName = name;
-					strcpy_s(this->filenamebuf, this->readableFileName.c_str());
+					strcpy_mac(this->filenamebuf, this->readableFileName.c_str());
 				}
 			}
 
@@ -624,8 +627,16 @@ void SmashScoreboard::PlayerOneSelectWindow::perframe()
 							frompath += ".png";
 							fs::path from = frompath;
 							fs::copy_file(from, to, copyOptions);
+
+							std::fstream changingModifiedTime;
+							changingModifiedTime.open(topath, std::ios::out | std::ios::app);
+							if (changingModifiedTime.is_open())
+							{
+								changingModifiedTime.close();
+							}
+							//Add in stuff later
 							
-							SYSTEMTIME currentSystemTime;
+							/*SYSTEMTIME currentSystemTime;
 							GetSystemTime(&currentSystemTime);
 
 							FILETIME modifiedfileTime;
@@ -653,7 +664,7 @@ void SmashScoreboard::PlayerOneSelectWindow::perframe()
 							if (!b)
 								std::cout << GetLastError() << std::endl;
 							else
-								std::cout << "OK" << std::endl;
+								std::cout << "OK" << std::endl;*/
 						}
 						WidthTakenUp += ImGui::GetItemRectSize().x;
 

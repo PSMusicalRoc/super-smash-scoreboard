@@ -77,7 +77,7 @@ void SmashScoreboard::init(std::string dirPath, SDL_Window* win, SDL_GLContext c
 					name.erase(name.rfind('/'));
 				}
 
-				name.erase(0, name.rfind('\\') + 1);
+				name.erase(0, name.rfind('/') + 1);
 
 				//std::cout << name << std::endl;
 
@@ -126,7 +126,7 @@ void SmashScoreboard::init(std::string dirPath, SDL_Window* win, SDL_GLContext c
 						//Generates a path for the next image to be loaded from
 						std::string path(dirPath);
 						path += characterList[i].text;
-						path += "\\";
+						path += "/";
 						path += characterList[i].text;
 						if (numImages < 10)
 							path += "_0" + std::to_string(numImages);
