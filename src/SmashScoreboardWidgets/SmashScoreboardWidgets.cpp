@@ -910,7 +910,7 @@ void SmashScoreboard::ScoreWindow::perframe()
 			this->comparisonScoreInt = std::stoi(instring);
 		}
 
-		ImGui::SetNextWindowSize(ImVec2(400, 100), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ImVec2(310, 122), ImGuiCond_FirstUseEver);
 
 		SmashScoreboard::StyleColorsFromIndex(this->styleIndex);
 
@@ -920,7 +920,32 @@ void SmashScoreboard::ScoreWindow::perframe()
 
 		ImGui::Begin((this->windowName + "###" + this->windowName).c_str(), &this->isVisible, flags);
 
-		
+		ImGui::Text("Player Score:");
+		ImGui::InputInt("##scoreinput", &this->scoreInt);
+		if (this->scoreInt < 0) {this->scoreInt = 0;}
+		else if (this->scoreInt > 9999) {this->scoreInt = 9999;}
+		ImGui::SameLine();
+		if (ImGui::Button("Reset to 0"))
+		{
+			this->scoreInt = 0;
+		}
+
+		if (this->comparisonScoreInt == this->scoreInt)
+		{
+			ImGui::TextColored(ImVec4(0.0, 0.6, 0.0, 1.0), "Updated Score!");
+		}
+		else
+		{
+			if (ImGui::Button("Set Score"))
+			{
+				outputFile.open(("Output/" + this->windowName + ".txt"), std::ios::out | std::ios::trunc);
+				if (outputFile.is_open())
+				{
+					outputFile << this->scoreInt;
+					outputFile.close();
+				}
+			}
+		}
 
 		ImGui::End();
 	}

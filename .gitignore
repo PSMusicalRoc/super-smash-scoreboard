@@ -350,5 +350,7 @@ icon1.ico
 *.sssb
 /res/loader/background_old.png
 /res/loader/loader_od.png
+/res/loader/icon_old.png
 *.o
-SmashScoreboard.out
+SmashScoreboard.AppImage
+SmashScoreboard
