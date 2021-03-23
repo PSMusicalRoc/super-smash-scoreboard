@@ -1101,9 +1101,9 @@ int main(int argc, char* argv[])
 				}
 				if (ImGui::MenuItem("Add Score Window"))
 				{
-					if (!SmashScoreboard::checkForTakenIdentifier("Score Window"))
+					if (!SmashScoreboard::checkForTakenIdentifier("Create New Score Window"))
 					{
-						SmashScoreboard::ScoreWindow::CreateWindow("Score Window", 1);
+						SmashScoreboard::ScoreWindowCreator::CreateWindow();
 					}
 				}
 
