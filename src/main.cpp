@@ -179,6 +179,12 @@ void renderWhiteText(std::string text, unsigned int height)
 
 int main(int argc, char* argv[])
 {
+
+	char cwd[400];
+	getcwd(cwd, 400);
+	
+	std::cout << cwd << std::endl;
+
 	//SETUP SDL2
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) > 0)
@@ -252,7 +258,7 @@ int main(int argc, char* argv[])
 	ImGuiIO& init_io = ImGui::GetIO();
 
 	//ImFont* font = io.Fonts->AddFontDefault();
-	ImFont* init_arial = init_io.Fonts->AddFontFromFileTTF("res/font/ARLRDBD.ttf", 18);
+	ImFont* init_arial = init_io.Fonts->AddFontFromFileTTF("./res/font/ARLRDBD.ttf", 18);
 	init_io.Fonts->Build();
 
 
@@ -395,9 +401,10 @@ int main(int argc, char* argv[])
 	ImGui::DestroyContext(tempContext);
 
 	std::string DirectoryToLoad = DirectoriesInPath[selection];
+	std::cout << DirectoryToLoad << std::endl << std::endl;
 	if (DirectoryToLoad.back() != '/' and DirectoryToLoad.back() != '\\')
 	{
-		DirectoryToLoad += '\\';
+		DirectoryToLoad += '/';
 	}
 
 	if (shouldClose)
@@ -434,7 +441,7 @@ int main(int argc, char* argv[])
 
 	FT_Face arial_font_face;
 
-	error = FT_New_Face(library, "res/font/ARLRDBD.TTF", 0, &arial_font_face);
+	error = FT_New_Face(library, "res/font/ARLRDBD.ttf", 0, &arial_font_face);
 	if (error == FT_Err_Unknown_File_Format)
 	{
 		std::cout << "An error has occured during the loading of FreeType2!" << std::endl;
@@ -872,49 +879,32 @@ int main(int argc, char* argv[])
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui::NewFrame();
 
-			//[IF FILE WINDOW IS OPEN]
+			ImGui::BeginMainMenuBar();
 
-			if (SmashScoreboard::ISFILEWINDOWOPEN)
+			if (ImGui::BeginMenu("File"))
 			{
-				SmashScoreboard::OpenFileWindow* win = SmashScoreboard::OpenFileWindow::getWindowPtr();
-				if (!win->isVisible)
-					win->CloseWindow();
-				else
-					win->perframe();
-#ifndef NDEBUG
-				//ImGui::StyleColorsLight();
-				ImGui::ShowDemoWindow();
-#endif
+				if (ImGui::MenuItem("Quit"))
+					shouldBeRunning = false;
+				ImGui::EndMenu();
 			}
-			else
-			{
-				ImGui::BeginMainMenuBar();
 
-				if (ImGui::BeginMenu("File"))
-				{
-					if (ImGui::MenuItem("Quit"))
-						shouldBeRunning = false;
-					ImGui::EndMenu();
-				}
+			ImGui::EndMainMenuBar();
 
-				ImGui::EndMainMenuBar();
-
-				//ImGui::StyleColorsLight();
-				ImGui::Begin("Failed to initialize");
-				ImGui::Text("Smash Scoreboard failed to initialize...");
-				ImGui::Text("Please make sure that your path to the .txt file is correct!");
+			//ImGui::StyleColorsLight();
+			ImGui::Begin("Failed to initialize");
+			ImGui::Text("Smash Scoreboard failed to initialize...");
+			ImGui::Text("Please make sure that your path to the .txt file is correct!");
 
 #ifndef NDEBUG
-				//ImGui::StyleColorsLight();
-				ImGui::ShowDemoWindow();
+			//ImGui::StyleColorsLight();
+			ImGui::ShowDemoWindow();
 #endif
 
-				ImGui::End();
+			ImGui::End();
 
-				auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
-				backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
-					SmashScoreboard::windowHeight), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
-			}
+			auto backgrounddrawlist = ImGui::GetBackgroundDrawList();
+			backgrounddrawlist->AddImage((ImTextureID)backgroundImage, ImVec2(0, 0), ImVec2(SmashScoreboard::windowWidth,
+				SmashScoreboard::windowHeight), ImVec2(0, 0), ImVec2(1, 1), ImU32(3439329279));
 
 			ImGui::EndFrame();
 
@@ -1101,19 +1091,19 @@ int main(int argc, char* argv[])
 				if (ImGui::MenuItem("Add Character Select Window"))
 				{
 					if (!SmashScoreboard::checkForTakenIdentifier("Create New Character Select Window"))
-						SmashScoreboard::AddPlayerSelectWindowWindow::CreateWindow();
+						SmashScoreboard::CharacterSelectWindowCreator::CreateWindow();
 				}
 				if (ImGui::MenuItem("Add Player Name Window"))
 				{
 					if (!SmashScoreboard::checkForTakenIdentifier("Create New Player Name Window"))
-						SmashScoreboard::AddPlayerTextWindow::CreateWindow();
+						SmashScoreboard::NameWindowCreator::CreateWindow();
 						//SmashScoreboard::PlayerTextWindow::CreateWindow("Test Player", 1);
 				}
 				if (ImGui::MenuItem("Add Score Window"))
 				{
-					if (!SmashScoreboard::checkForTakenIdentifier("Score Window"))
+					if (!SmashScoreboard::checkForTakenIdentifier("Create New Score Window"))
 					{
-						SmashScoreboard::ScoreWindow::CreateWindow("Score Window", 1);
+						SmashScoreboard::ScoreWindowCreator::CreateWindow();
 					}
 				}
 
@@ -1134,13 +1124,13 @@ int main(int argc, char* argv[])
 					if (ImGui::MenuItem("Character Select Window"))
 					{
 						if (!SmashScoreboard::checkForTakenIdentifier("Create New Character Select Window"))
-							SmashScoreboard::AddPlayerSelectWindowWindow::CreateWindow();
+							SmashScoreboard::CharacterSelectWindowCreator::CreateWindow();
 					}
 
 					if (ImGui::MenuItem("Name Input Window"))
 					{
 						if (!SmashScoreboard::checkForTakenIdentifier("Create New Player Name Window"))
-							SmashScoreboard::AddPlayerTextWindow::CreateWindow();
+							SmashScoreboard::NameWindowCreator::CreateWindow();
 					}
 
 					ImGui::EndMenu();

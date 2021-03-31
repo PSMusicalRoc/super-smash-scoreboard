@@ -1,5 +1,6 @@
 #include <SmashScoreboardFunctions.h>
 #include <iostream>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 
@@ -77,12 +78,33 @@ void SmashScoreboard::init(std::string dirPath, SDL_Window* win, SDL_GLContext c
 					name.erase(name.rfind('/'));
 				}
 
-				name.erase(0, name.rfind('\\') + 1);
+				name.erase(0, name.rfind('/') + 1);
 
 				//std::cout << name << std::endl;
 
 				characterList.push_back(CharacterName(name));
 			}
+		}
+
+		processMessage = "Alphabetizing the roster...";
+
+		for (int i = 0; i < characterList.size(); i++)
+		{
+			CharacterName* character = &characterList[i];
+			int position = i;
+			for (int j = i + 1; j < characterList.size(); j++)
+			{
+				if (characterList[j].text < character->text)
+				{
+					character = &characterList[j];
+					position = j;
+				}
+				//check if j is less than i, if so, set j to character
+				//at the end, swap j with position i, and iterate over and
+				//over again.
+				//This might take a while to start up, but it'll alphabetize
+			}
+			std::iter_swap(characterList.begin() + i, characterList.begin() + position);
 		}
 
 		if (characterList.size() == 0)
@@ -126,7 +148,7 @@ void SmashScoreboard::init(std::string dirPath, SDL_Window* win, SDL_GLContext c
 						//Generates a path for the next image to be loaded from
 						std::string path(dirPath);
 						path += characterList[i].text;
-						path += "\\";
+						path += "/";
 						path += characterList[i].text;
 						if (numImages < 10)
 							path += "_0" + std::to_string(numImages);
