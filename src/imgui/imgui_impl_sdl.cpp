@@ -48,14 +48,9 @@
 #include "imgui_impl_sdl.h"
 
 // SDL
-#ifdef __linux__ 
-    #include <SDL2/SDL.h>
-	#include <SDL2/SDL_image.h>
-#elif _WIN32
-    #include <SDL.h>
-	#include <SDL_image.h>
-#else
-#endif
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
+
 #if defined(__APPLE__)
 #include "TargetConditionals.h"
 #endif
