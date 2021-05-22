@@ -2,6 +2,8 @@
 
 #ifdef _WIN32
 	#include <Windows.h>
+	#include <direct.h>
+	#define GetCurrentDir _getcwd
 	#pragma push_macro("CreateWindow")
 	#undef CreateWindow
 #endif

@@ -4,8 +4,8 @@
     #include <SDL2/SDL.h>
 	#include <SDL2/SDL_image.h>
 #elif _WIN32
-    #include <SDL.h>
-	#include <SDL_image.h>
+    #include <SDL2/SDL.h>
+	#include <SDL2/SDL_image.h>
 #else
 #endif
 
@@ -179,12 +179,12 @@ void renderWhiteText(std::string text, unsigned int height)
 
 int main(int argc, char* argv[])
 {
-
+#ifdef __linux__
 	char cwd[400];
 	getcwd(cwd, 400);
 	
 	std::cout << cwd << std::endl;
-
+#endif
 	//SETUP SDL2
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) > 0)
