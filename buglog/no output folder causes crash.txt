@@ -1,0 +1,3 @@
+if you try to use a window and no output folder exists, the program crashes
+
+maybe try to make a function that checks for an output folder when the user tries to do something and creates one if it doesn't exist

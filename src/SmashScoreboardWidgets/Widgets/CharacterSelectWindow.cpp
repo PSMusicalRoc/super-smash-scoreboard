@@ -2,8 +2,10 @@
 
 #ifdef _WIN32
 	#include <Windows.h>
+	#include <direct.h>
 	#pragma push_macro("CreateWindow")
 	#undef CreateWindow
+	#define GetCurrentDir _getcwd
 #endif
 
 namespace fs = std::filesystem;
