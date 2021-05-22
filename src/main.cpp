@@ -4,7 +4,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -175,12 +174,12 @@ void renderWhiteText(std::string text, unsigned int height)
 
 int main(int argc, char* argv[])
 {
-
+#ifdef __linux__
 	char cwd[400];
 	getcwd(cwd, 400);
 	
 	std::cout << cwd << std::endl;
-
+#endif
 	//SETUP SDL2
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) > 0)
