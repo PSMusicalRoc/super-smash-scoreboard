@@ -1,12 +1,8 @@
 #pragma once
-#ifdef __linux__ 
-    #include <SDL2/SDL.h>
-	#include <SDL2/SDL_image.h>
-#elif _WIN32
-    #include <SDL2/SDL.h>
-	#include <SDL2/SDL_image.h>
-#else
-#endif
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui_impl_sdl.h>

@@ -1,13 +1,8 @@
 #include <string>
 #include <algorithm>
-#ifdef __linux__ 
-    #include <SDL2/SDL.h>
-	#include <SDL2/SDL_image.h>
-#elif _WIN32
-    #include <SDL2/SDL.h>
-	#include <SDL2/SDL_image.h>
-#else
-#endif
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
